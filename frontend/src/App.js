@@ -2512,6 +2512,26 @@ function App() {
   const [regMode, setRegMode] = useStickyState('join', 'draft_mode');
   const [joinCode, setJoinCode] = useState('');
 
+  // --- REAL-TIME INVITE CODE VALIDATOR ---
+  const [liveCodeStatus, setLiveCodeStatus] = useState({ isValid: false, message: '', loading: false });
+
+  useEffect(() => {
+    if (joinCode.length === 6) {
+       setLiveCodeStatus({ isValid: false, message: '', loading: true });
+       // Instantly queries Supabase to see if the code exists
+       supabase.from('departments').select('name').eq('invite_code', joinCode).maybeSingle()
+       .then(({ data }) => {
+          if (data) {
+             setLiveCodeStatus({ isValid: true, message: `Verified: ${data.name}`, loading: false });
+          } else {
+             setLiveCodeStatus({ isValid: false, message: 'Invalid or Expired Code', loading: false });
+          }
+       });
+    } else {
+       setLiveCodeStatus({ isValid: false, message: '', loading: false });
+    }
+  }, [joinCode]);
+
   // --- DATA STATES ---
   const staffEditorRef = useRef(null);
   const logoEditorRef = useRef(null);
@@ -4172,21 +4192,50 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                           </button>
                         </div>
 
-                        <div className="relative">
-                          <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="w-full bg-slate-50 p-4 pr-12 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
-                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
-                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
+                      {/* LIVE PASSWORD MATCHING */}
+                        <div>
+                          <div className="relative">
+                            <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className={`w-full bg-slate-50 p-4 pr-12 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${confirmPassword.length > 0 ? (password === confirmPassword ? 'border-emerald-500 focus:border-emerald-500' : 'border-rose-500 focus:border-rose-500') : 'border-transparent focus:border-blue-500'}`}/>
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                          {confirmPassword.length > 0 && (
+                            <div className="px-2 mt-1.5">
+                              {password === confirmPassword ? (
+                                <span className="text-[9px] font-black uppercase text-emerald-500 flex items-center gap-1"><CheckCircle2 size={10}/> Passwords match</span>
+                              ) : (
+                                <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> Passwords do not match</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         
-                        <input type="text" placeholder="6-Character Invite Code (e.g. X7B9PQ)" value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())} className="w-full bg-blue-50 p-4 rounded-2xl font-black text-xs text-blue-800 border-2 border-transparent focus:border-blue-500 outline-none transition-all tracking-widest uppercase"/>
+                        {/* LIVE INVITE CODE VALIDATOR */}
+                        <div className="pt-2">
+                          <input maxLength={6} type="text" placeholder="6-Character Invite Code" value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className={`w-full p-4 rounded-2xl font-black text-xs border-2 outline-none transition-all tracking-widest uppercase ${joinCode.length === 6 ? (liveCodeStatus.isValid ? 'bg-emerald-50 border-emerald-500 text-emerald-800' : 'bg-rose-50 border-rose-500 text-rose-800') : 'bg-blue-50 border-transparent focus:border-blue-500 text-blue-800'}`}/>
+                          
+                          <div className="px-2 mt-1.5 h-4">
+                            {liveCodeStatus.loading ? (
+                               <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking code...</span>
+                            ) : joinCode.length === 6 ? (
+                               liveCodeStatus.isValid ? (
+                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveCodeStatus.message}</span>
+                               ) : (
+                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><X size={10}/> {liveCodeStatus.message}</span>
+                               )
+                            ) : joinCode.length > 0 ? (
+                               <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Info size={10}/> Waiting for 6 characters...</span>
+                            ) : null}
+                          </div>
+                        </div>
                         <select value={regRole} onChange={e=>setRegRole(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none">
                           <option value="PROCTOR">Proctor</option>
                           <option value="DEPT_ADMIN">Department Head</option>
                         </select>
                       </div>
                       
-                      <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-500 disabled:opacity-50 transition-all mb-6 shadow-xl active:scale-95">
+<button type="submit" disabled={loading || (confirmPassword.length > 0 && password !== confirmPassword) || (joinCode.length === 6 && !liveCodeStatus.isValid)} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-500 disabled:opacity-50 transition-all mb-6 shadow-xl active:scale-95">
                         {loading ? "Processing..." : "Send Verification Code"}
                       </button>
                     </>
