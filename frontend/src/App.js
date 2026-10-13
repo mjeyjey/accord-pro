@@ -74,6 +74,78 @@ const UserAvatar = ({ fullName, avatarUrl, size = 40 }) => {
   );
 };
 
+// --- PREMIUM 6-BOX OTP/PIN COMPONENT ---
+const OtpInput = ({ value, onChange }) => {
+  const inputRefs = React.useRef([]);
+
+  const handlePinChange = (index, val) => {
+    const char = val.slice(-1).toUpperCase();
+    let newPin = (value || '').padEnd(6, ' ').split('');
+    newPin[index] = char || ' ';
+    const finalPin = newPin.join('').trimEnd();
+    onChange(finalPin);
+
+    // Auto-advance
+    if (char && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePinKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      let newPin = (value || '').padEnd(6, ' ').split('');
+      
+      if (!newPin[index] || newPin[index] === ' ') {
+        // Jump back and delete
+        if (index > 0) {
+          newPin[index - 1] = ' ';
+          inputRefs.current[index - 1]?.focus();
+        }
+      } else {
+        // Delete current
+        newPin[index] = ' ';
+      }
+      onChange(newPin.join('').trimEnd());
+    }
+  };
+
+  const handlePinPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/[^a-zA-Z0-9]/g, '').substring(0, 6).toUpperCase();
+    onChange(pasted);
+    const focusIndex = Math.min(pasted.length, 5);
+    inputRefs.current[focusIndex]?.focus();
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2 md:gap-3 mb-6 mt-2" onPaste={handlePinPaste}>
+      {[0, 1, 2, 3, 4, 5].map((index) => {
+         const charVal = (value || '').padEnd(6, ' ')[index];
+         return (
+        <React.Fragment key={index}>
+          <input
+            ref={el => inputRefs.current[index] = el}
+            type="text"
+            maxLength={1}
+            value={charVal === ' ' ? '' : charVal}
+            onChange={e => handlePinChange(index, e.target.value)}
+            onKeyDown={e => handlePinKeyDown(index, e)}
+            className={`w-11 h-14 md:w-14 md:h-16 rounded-xl md:rounded-2xl text-center text-2xl md:text-3xl font-black outline-none transition-all duration-200 uppercase caret-emerald-500 ${
+              charVal && charVal !== ' '
+                ? 'bg-white border-2 border-emerald-400 text-slate-900 shadow-[0_4px_20px_rgba(52,211,153,0.2)] scale-[1.05]'
+                : 'bg-slate-50 border-2 border-slate-100 text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:shadow-sm focus:scale-[1.02]'
+            }`}
+          />
+          {index === 2 && (
+            <div className="w-2 md:w-3 h-1 rounded-full bg-slate-200/50 mx-0.5 md:mx-1"></div>
+          )}
+        </React.Fragment>
+      )})}
+    </div>
+  );
+};
+
 // --- GLOBAL & DIRECT REAL-TIME CHAT PANEL (MULTI-PANE & MOBILE SWIPE EDITION) ---
 const ChatPanel = ({ profile, allProfiles, departments = [], onClose, onViewProctor, chatTarget }) => {
   const [messages, setMessages] = useState([]);
@@ -2455,7 +2527,16 @@ function App() {
 
   // --- NEW: CHAT TARGET STATE ---
   const [chatTarget, setChatTarget] = useState({ roomId: null, messageId: null });
+const [otpTimer, setOtpTimer] = useState(0);
 
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => setOtpTimer(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+  
   // --- NEW: CREST UPLOAD MODAL ---
   const [logoModal, setLogoModal] = useState({ isOpen: false, type: 'university', targetId: null, currentLogo: '', newLogoBase64: null, newLogoType: null, zoom: 1, removeBg: true });
   
@@ -2990,6 +3071,7 @@ const handleForgotSendOtp = async (e) => {
     } else {
       setAppToast({ message: "6-Digit OTP sent to your email!", type: 'success' });
       setForgotStep('otp');
+      setOtpTimer(60); // Starts the cooldown
     }
     setLoading(false);
   };
@@ -3089,6 +3171,7 @@ const handleForgotSendOtp = async (e) => {
     // 1. Generate 6-digit OTP and show next screen
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     setPasswordForm({ ...passwordForm, otpSent: true, generatedOtp: otp });
+    setOtpTimer(60); // Starts the cooldown
     setAppToast({ message: "Sending OTP to your email...", type: 'success' });
 
     // 2. Fire the email
@@ -3197,6 +3280,7 @@ const handleVerifyCurrentPassword = async (e) => {
       setAppToast({ message: error.message, type: 'error' });
     } else {
       setPasswordForm({ ...passwordForm, otpSent: true });
+      setOtpTimer(60); // Starts the cooldown
       setAppToast({ message: "Sending OTP to your NEW email...", type: 'success' });
     }
   };
@@ -3356,6 +3440,7 @@ const executeRegistration = async () => {
       if (error) throw error;
       
       setOtpMode(true);
+      setOtpTimer(60); // Starts the cooldown
       setAppToast({ message: "Verification code sent to your email!", type: "success" });
       
     } catch (err) { setAppToast({ message: err.message, type: "error" }); } 
@@ -4014,9 +4099,15 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                      <p className="text-[10px] font-bold text-blue-800">OTP sent to <strong>{email}</strong></p>
                   </div>
                   
-                  <input type="text" maxLength="6" placeholder="6-Digit OTP" value={forgotOtp} onChange={e=>setForgotOtp(e.target.value.toUpperCase())} className="w-full bg-slate-50 p-4 rounded-2xl mb-3 font-black text-xl text-center tracking-[0.5em] border-2 border-transparent focus:border-blue-500 outline-none transition-all uppercase"/>
-                  <input type="password" placeholder="Create New Password" value={forgotNewPass} onChange={e=>setForgotNewPass(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl mb-6 font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all text-center"/>
+                  <OtpInput value={forgotOtp} onChange={setForgotOtp} />
+                  <input type="password" placeholder="Create New Password" value={forgotNewPass} onChange={e=>setForgotNewPass(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl mb-4 font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all text-center"/>
                   
+                  <div className="flex justify-between items-center mb-6 px-2">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                    <button type="button" disabled={otpTimer > 0} onClick={handleForgotSendOtp} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                      {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                    </button>
+                  </div>
                   <button type="submit" disabled={loading || forgotOtp.length < 6} className="w-full bg-emerald-500 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-400 disabled:opacity-50 transition-all shadow-xl active:scale-95">
                     {loading ? "Verifying..." : "Verify & Save Password"}
                   </button>
@@ -4082,8 +4173,16 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
                      <p className="text-[10px] font-bold text-blue-800 text-center">We sent a 6-digit code to <strong>{email}</strong></p>
                   </div>
-                  <input type="text" maxLength="6" placeholder="Enter 6-Digit Code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} className="w-full bg-slate-50 p-6 rounded-2xl font-black text-2xl text-center tracking-[0.5em] border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
+
+<OtpInput value={otpCode} onChange={setOtpCode} />
                   
+                  <div className="flex justify-between items-center mb-6 px-2">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                    <button type="button" disabled={otpTimer > 0} onClick={executeRegistration} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                      {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                    </button>
+                  </div>
+
                   <button type="submit" disabled={loading || otpCode.length < 6} className="w-full bg-emerald-500 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-400 disabled:opacity-50 transition-all shadow-xl active:scale-95">
                     {loading ? "Verifying..." : "Verify & Complete"}
                   </button>
@@ -4451,15 +4550,23 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtpAndUpdate}>
-                    <div className="mb-6">
+                    
+                    <div className="mb-2">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">Enter 6-Digit OTP</label>
-<p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{session?.user?.email}</strong>.</p>
-                      <input type="text" required maxLength="6" className="w-full bg-slate-50 border-2 border-slate-100 p-6 rounded-2xl text-center text-3xl tracking-[0.4em] font-black outline-none focus:border-emerald-500 transition-all"
-                        value={passwordForm.userOtpInput} onChange={(e) => setPasswordForm({ ...passwordForm, userOtpInput: e.target.value })} />
+                      <p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{session?.user?.email}</strong>.</p>
+                      <OtpInput value={passwordForm.userOtpInput} onChange={(val) => setPasswordForm({ ...passwordForm, userOtpInput: val })} />
                     </div>
-                   <div className="mb-4 bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                      <span className="block text-[9px] font-black text-blue-400 uppercase mb-1">Current Email</span>
-                      <span className="text-xs font-bold text-blue-900">{session?.user?.email}</span>
+                    
+                    <div className="flex justify-between items-center mb-6 px-2">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                      <button type="button" disabled={otpTimer > 0} onClick={handleRequestPasswordChange} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                        {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                      </button>
+                    </div>
+
+                    <div className="flex justify-end gap-4 pt-2 border-t border-slate-100 mt-4">
+                      <button type="button" onClick={() => setPasswordForm({ ...passwordForm, otpSent: false, userOtpInput: '' })} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Back</button>
+                      <button type="submit" disabled={loading} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg transition-colors disabled:opacity-50">Verify & Update</button>
                     </div>
                   </form>
                 )
@@ -4495,12 +4602,19 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtpAndUpdate}>
-                    <div className="mb-6">
+                  
+                  <div className="mb-2">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">Enter 6-Digit OTP</label>
                       <p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{passwordForm.newEmail}</strong>.</p>
-                      <input type="text" required maxLength="6" className="w-full bg-slate-50 border-2 border-slate-100 p-6 rounded-2xl text-center text-3xl tracking-[0.4em] font-black outline-none focus:border-emerald-500 transition-all"
-                        value={passwordForm.userOtpInput} onChange={(e) => setPasswordForm({ ...passwordForm, userOtpInput: e.target.value })} />
+                      <OtpInput value={passwordForm.userOtpInput} onChange={(val) => setPasswordForm({ ...passwordForm, userOtpInput: val })} />
                     </div>
+                    <div className="flex justify-between items-center mb-6 px-2">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                      <button type="button" disabled={otpTimer > 0} onClick={handleRequestEmailChange} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                        {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                      </button>
+                    </div>
+
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => setPasswordForm({ ...passwordForm, otpSent: false, userOtpInput: '' })} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Back</button>
                       <button type="submit" disabled={loading} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg transition-colors disabled:opacity-50">Verify & Update</button>
@@ -4952,6 +5066,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                         
                        <div className="flex items-center justify-between mb-6 group/campus">
                            <div className="flex items-center gap-4">
+
                              {/* CAMPUS CREST BUTTON */}
                              <button 
                                onClick={() => isHeadAdmin && setLogoModal({ isOpen: true, type: 'campus', targetId: campusName, currentLogo: depts[0]?.campus_logo_url, newLogoBase64: null, newLogoType: null, zoom: 1, removeBg: true })}
@@ -4997,9 +5112,12 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
 
                         </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
   {depts.map(dept => {
-    // --- LIVE COVERAGE CALCULATION ---
+   
+   // --- LIVE COVERAGE CALCULATION ---
     const deptSchedule = globalSchedule.filter(s => s.dept_code === dept.code);
     const totalSlots = deptSchedule.length;
     const filledSlots = deptSchedule.filter(s => s.proctor && s.proctor !== 'TBA').length;
@@ -5680,7 +5798,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
           </div>
         )}
 
-      {/* --- CHANGE PASSWORD MODAL --- */}
+    
       {/* --- ACCOUNT SETTINGS MODAL --- */}
         {showPasswordModal && (
           <div className="fixed inset-0 z-[600] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in zoom-in duration-300">
@@ -5715,12 +5833,19 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtpAndUpdate}>
-                    <div className="mb-6">
+                  
+                   <div className="mb-2">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">Enter 6-Digit OTP</label>
-<p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{session?.user?.email}</strong>.</p>
-                      <input type="text" required maxLength="6" className="w-full bg-slate-50 border-2 border-slate-100 p-6 rounded-2xl text-center text-3xl tracking-[0.4em] font-black outline-none focus:border-emerald-500 transition-all"
-                        value={passwordForm.userOtpInput} onChange={(e) => setPasswordForm({ ...passwordForm, userOtpInput: e.target.value })} />
+                      <p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{session?.user?.email}</strong>.</p>
+                      <OtpInput value={passwordForm.userOtpInput} onChange={(val) => setPasswordForm({ ...passwordForm, userOtpInput: val })} />
                     </div>
+                    <div className="flex justify-between items-center mb-6 px-2">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                      <button type="button" disabled={otpTimer > 0} onClick={handleRequestPasswordChange} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                        {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                      </button>
+                    </div>
+
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => setPasswordForm({ ...passwordForm, otpSent: false, userOtpInput: '' })} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Back</button>
                       <button type="submit" className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg transition-colors">Verify & Update</button>
@@ -5760,12 +5885,19 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtpAndUpdate}>
-                    <div className="mb-6">
+                   
+                   <div className="mb-2">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">Enter 6-Digit OTP</label>
                       <p className="text-xs text-slate-500 mb-4 font-bold">We sent a verification code to <strong className="text-slate-800">{passwordForm.newEmail}</strong>.</p>
-                      <input type="text" required maxLength="6" className="w-full bg-slate-50 border-2 border-slate-100 p-6 rounded-2xl text-center text-3xl tracking-[0.4em] font-black outline-none focus:border-emerald-500 transition-all"
-                        value={passwordForm.userOtpInput} onChange={(e) => setPasswordForm({ ...passwordForm, userOtpInput: e.target.value })} />
+                      <OtpInput value={passwordForm.userOtpInput} onChange={(val) => setPasswordForm({ ...passwordForm, userOtpInput: val })} />
                     </div>
+                    <div className="flex justify-between items-center mb-6 px-2">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Didn't get the code?</span>
+                      <button type="button" disabled={otpTimer > 0} onClick={handleRequestEmailChange} className="text-[9px] font-black text-blue-600 uppercase tracking-widest disabled:text-slate-400 hover:text-blue-800 transition-colors">
+                        {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                      </button>
+                    </div>
+
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => setPasswordForm({ ...passwordForm, otpSent: false, userOtpInput: '' })} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Back</button>
                       <button type="submit" disabled={loading} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg transition-colors disabled:opacity-50">Verify & Update</button>
