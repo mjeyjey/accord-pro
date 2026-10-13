@@ -2556,34 +2556,7 @@ function App() {
     return () => clearTimeout(delayDebounceFn);
   }, [email]);
 
-  // --- REAL-TIME EMAIL VALIDATOR (FOR ACCOUNT SETTINGS) ---
-  const [liveNewEmailStatus, setLiveNewEmailStatus] = useState({ isAvailable: true, message: '', loading: false });
-
-  useEffect(() => {
-    if (!passwordForm.newEmail || !passwordForm.newEmail.includes('@')) {
-      setLiveNewEmailStatus({ isAvailable: true, message: '', loading: false });
-      return;
-    }
-    
-    // Prevent them from changing it to their current email
-    if (passwordForm.newEmail === session?.user?.email) {
-      setLiveNewEmailStatus({ isAvailable: false, message: 'This is your current email.', loading: false });
-      return;
-    }
-
-    setLiveNewEmailStatus({ isAvailable: true, message: '', loading: true });
-    
-    const delayDebounceFn = setTimeout(async () => {
-       const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('email', passwordForm.newEmail.trim());
-       if (count > 0) {
-          setLiveNewEmailStatus({ isAvailable: false, message: 'Email is already taken.', loading: false });
-       } else {
-          setLiveNewEmailStatus({ isAvailable: true, message: 'Email is available.', loading: false });
-       }
-    }, 800); 
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [passwordForm.newEmail, session?.user?.email]);
+  
 
   // --- DATA STATES ---
   const staffEditorRef = useRef(null);
@@ -2628,6 +2601,36 @@ const [otpTimer, setOtpTimer] = useState(0);
   const [passwordForm, setPasswordForm] = useState({ 
     tab: 'password', currentPass: '', passVerified: false, newPass: '', confirmPass: '', otpSent: false, generatedOtp: '', userOtpInput: '', newEmail: '' 
   });
+
+  // --- REAL-TIME EMAIL VALIDATOR (FOR ACCOUNT SETTINGS) ---
+  const [liveNewEmailStatus, setLiveNewEmailStatus] = useState({ isAvailable: true, message: '', loading: false });
+
+  useEffect(() => {
+    if (!passwordForm.newEmail || !passwordForm.newEmail.includes('@')) {
+      setLiveNewEmailStatus({ isAvailable: true, message: '', loading: false });
+      return;
+    }
+    
+    // Prevent them from changing it to their current email
+    if (passwordForm.newEmail === session?.user?.email) {
+      setLiveNewEmailStatus({ isAvailable: false, message: 'This is your current email.', loading: false });
+      return;
+    }
+
+    setLiveNewEmailStatus({ isAvailable: true, message: '', loading: true });
+    
+    const delayDebounceFn = setTimeout(async () => {
+       const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('email', passwordForm.newEmail.trim());
+       if (count > 0) {
+          setLiveNewEmailStatus({ isAvailable: false, message: 'Email is already taken.', loading: false });
+       } else {
+          setLiveNewEmailStatus({ isAvailable: true, message: 'Email is available.', loading: false });
+       }
+    }, 800); 
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [passwordForm.newEmail, session?.user?.email]);
+  
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', text: '', action: null });
   const [approvalModal, setApprovalModal] = useState({ isOpen: false, profile: null }); 
   const [editStaffModal, setEditStaffModal] = useState({ isOpen: false, id: '', name: '', role: '', dept: '', currentAvatar: '', newAvatarBase64: null, newAvatarType: null, zoom: 1 });
