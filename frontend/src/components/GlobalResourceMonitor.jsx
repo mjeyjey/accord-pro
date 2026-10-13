@@ -367,9 +367,15 @@ const GlobalResourceMonitor = ({ allDepartments, globalSchedule, allProfiles, on
                                     <div>
                                         <p className="text-xs font-black text-slate-800 uppercase leading-none mb-1">ROOM {room.number}</p>
                                         <div className="flex items-center gap-1.5 mt-1.5">
-                                            <span className="bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest shadow-sm">
-                                                {room.deptCode}
-                                            </span>
+                                            {room.type === 'Global' ? (
+                                                <span className="bg-blue-600 text-white px-2 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest shadow-md">
+                                                    GLOBAL POOL
+                                                </span>
+                                            ) : (
+                                                <span className="bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest shadow-sm">
+                                                    {room.deptCode}
+                                                </span>
+                                            )}
                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">{room.type} Resource</span>
                                         </div>
                                     </div>
