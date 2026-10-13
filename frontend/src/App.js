@@ -2556,6 +2556,35 @@ function App() {
     return () => clearTimeout(delayDebounceFn);
   }, [email]);
 
+  // --- REAL-TIME EMAIL VALIDATOR (FOR ACCOUNT SETTINGS) ---
+  const [liveNewEmailStatus, setLiveNewEmailStatus] = useState({ isAvailable: true, message: '', loading: false });
+
+  useEffect(() => {
+    if (!passwordForm.newEmail || !passwordForm.newEmail.includes('@')) {
+      setLiveNewEmailStatus({ isAvailable: true, message: '', loading: false });
+      return;
+    }
+    
+    // Prevent them from changing it to their current email
+    if (passwordForm.newEmail === session?.user?.email) {
+      setLiveNewEmailStatus({ isAvailable: false, message: 'This is your current email.', loading: false });
+      return;
+    }
+
+    setLiveNewEmailStatus({ isAvailable: true, message: '', loading: true });
+    
+    const delayDebounceFn = setTimeout(async () => {
+       const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('email', passwordForm.newEmail.trim());
+       if (count > 0) {
+          setLiveNewEmailStatus({ isAvailable: false, message: 'Email is already taken.', loading: false });
+       } else {
+          setLiveNewEmailStatus({ isAvailable: true, message: 'Email is available.', loading: false });
+       }
+    }, 800); 
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [passwordForm.newEmail, session?.user?.email]);
+
   // --- DATA STATES ---
   const staffEditorRef = useRef(null);
   const logoEditorRef = useRef(null);
@@ -4111,23 +4140,9 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                 const {error}=await supabase.auth.signInWithPassword({email,password}); 
                 if(error) setAppToast({ message: error.message, type: "error" });
               }}>
-               {/* REDUCED INPUT HEIGHT: py-3.5 on mobile */}
-{/* LIVE EMAIL VALIDATOR */}
-                        <div>
-                          <input type="email" placeholder="Work Email" value={email} onChange={e=>setEmail(e.target.value)} className={`w-full p-4 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${email.includes('@') ? (liveEmailStatus.loading ? 'bg-slate-50 border-blue-300' : liveEmailStatus.isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-900 focus:border-emerald-600' : 'bg-rose-50 border-rose-500 text-rose-900 focus:border-rose-600') : 'bg-slate-50 border-transparent focus:border-blue-500'}`}/>
-                          
-                          {email.includes('@') && (
-                            <div className="px-2 mt-1.5 h-4">
-                              {liveEmailStatus.loading ? (
-                                 <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking email...</span>
-                              ) : liveEmailStatus.isAvailable ? (
-                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveEmailStatus.message}</span>
-                              ) : (
-                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> {liveEmailStatus.message}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+              
+              {/* REDUCED INPUT HEIGHT: py-3.5 on mobile */}
+               <input type="email" placeholder="Email Address" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 px-4 py-3.5 md:p-4 rounded-xl md:rounded-2xl mb-3 font-bold text-[11px] md:text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
 
                <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 px-4 py-3.5 md:p-4 rounded-xl md:rounded-2xl mb-4 font-bold text-[11px] md:text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
 
@@ -4222,8 +4237,26 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                     <>
                      <div className="space-y-3 mb-6">
                         <input type="text" placeholder="Full Name (e.g. Juan Dela Cruz)" value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
-                        <input type="email" placeholder="Work Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
-                        
+                      
+
+                       {/* LIVE EMAIL VALIDATOR */}
+                        <div>
+                          <input type="email" placeholder="Work Email" value={email} onChange={e=>setEmail(e.target.value)} className={`w-full p-4 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${email.includes('@') ? (liveEmailStatus.loading ? 'bg-slate-50 border-blue-300' : liveEmailStatus.isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-900 focus:border-emerald-600' : 'bg-rose-50 border-rose-500 text-rose-900 focus:border-rose-600') : 'bg-slate-50 border-transparent focus:border-blue-500'}`}/>
+                          
+                          {email.includes('@') && (
+                            <div className="px-2 mt-1.5 h-4">
+                              {liveEmailStatus.loading ? (
+                                 <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking email...</span>
+                              ) : liveEmailStatus.isAvailable ? (
+                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveEmailStatus.message}</span>
+                              ) : (
+                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> {liveEmailStatus.message}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+
                         <div className="relative">
                           <input type={showPassword ? "text" : "password"} placeholder="Create Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 p-4 pr-12 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
                           <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
@@ -4704,12 +4737,26 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                     </div>
                     <div className="mb-6">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">New Email Address</label>
-                      <input type="email" required placeholder="new@accord.edu" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 transition-all"
-                        value={passwordForm.newEmail} onChange={(e) => setPasswordForm({ ...passwordForm, newEmail: e.target.value })} />
+                      {/* LIVE NEW EMAIL VALIDATOR */}
+                        <div>
+                          <input type="email" required placeholder="new@accord.edu" value={passwordForm.newEmail} onChange={(e) => setPasswordForm({ ...passwordForm, newEmail: e.target.value })} className={`w-full p-4 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${passwordForm.newEmail.includes('@') ? (liveNewEmailStatus.loading ? 'bg-slate-50 border-blue-300' : liveNewEmailStatus.isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-900 focus:border-emerald-600' : 'bg-rose-50 border-rose-500 text-rose-900 focus:border-rose-600') : 'bg-slate-50 border-transparent focus:border-blue-500'}`}/>
+                          
+                          {passwordForm.newEmail.includes('@') && (
+                            <div className="px-2 mt-1.5 h-4">
+                              {liveNewEmailStatus.loading ? (
+                                 <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking email...</span>
+                              ) : liveNewEmailStatus.isAvailable ? (
+                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveNewEmailStatus.message}</span>
+                              ) : (
+                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> {liveNewEmailStatus.message}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => { setShowPasswordModal(false); setPasswordForm({ tab: 'password', currentPass: '', passVerified: false, newPass: '', confirmPass: '', otpSent: false, generatedOtp: '', userOtpInput: '', newEmail: '' }); }} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
-                      <button type="submit" disabled={loading} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition-colors disabled:opacity-50">Send OTP</button>
+                      <button type="submit" disabled={loading || !liveNewEmailStatus.isAvailable} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition-colors disabled:opacity-50">Send OTP</button>
                     </div>
                   </form>
                 ) : (
@@ -5987,12 +6034,26 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                     </div>
                     <div className="mb-6">
                       <label className="block text-[9px] font-black text-slate-500 uppercase ml-2 mb-1">New Email Address</label>
-                      <input type="email" required placeholder="new@accord.edu" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 transition-all"
-                        value={passwordForm.newEmail} onChange={(e) => setPasswordForm({ ...passwordForm, newEmail: e.target.value })} />
+                     {/* LIVE NEW EMAIL VALIDATOR */}
+                        <div>
+                          <input type="email" required placeholder="new@accord.edu" value={passwordForm.newEmail} onChange={(e) => setPasswordForm({ ...passwordForm, newEmail: e.target.value })} className={`w-full p-4 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${passwordForm.newEmail.includes('@') ? (liveNewEmailStatus.loading ? 'bg-slate-50 border-blue-300' : liveNewEmailStatus.isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-900 focus:border-emerald-600' : 'bg-rose-50 border-rose-500 text-rose-900 focus:border-rose-600') : 'bg-slate-50 border-transparent focus:border-blue-500'}`}/>
+                          
+                          {passwordForm.newEmail.includes('@') && (
+                            <div className="px-2 mt-1.5 h-4">
+                              {liveNewEmailStatus.loading ? (
+                                 <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking email...</span>
+                              ) : liveNewEmailStatus.isAvailable ? (
+                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveNewEmailStatus.message}</span>
+                              ) : (
+                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> {liveNewEmailStatus.message}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => { setShowPasswordModal(false); setPasswordForm({ tab: 'password', currentPass: '', passVerified: false, newPass: '', confirmPass: '', otpSent: false, generatedOtp: '', userOtpInput: '', newEmail: '' }); }} className="flex-1 p-4 rounded-xl font-black text-[10px] uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
-                      <button type="submit" disabled={loading} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition-colors disabled:opacity-50">Send OTP</button>
+                      <button type="submit" disabled={loading || !liveNewEmailStatus.isAvailable} className="flex-[2] p-4 rounded-xl font-black text-[10px] uppercase text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition-colors disabled:opacity-50">Send OTP</button>
                     </div>
                   </form>
                 ) : (
