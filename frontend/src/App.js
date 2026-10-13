@@ -2532,6 +2532,30 @@ function App() {
     }
   }, [joinCode]);
 
+  // --- REAL-TIME EMAIL VALIDATOR (WITH DEBOUNCE) ---
+  const [liveEmailStatus, setLiveEmailStatus] = useState({ isAvailable: true, message: '', loading: false });
+
+  useEffect(() => {
+    if (!email || !email.includes('@')) {
+      setLiveEmailStatus({ isAvailable: true, message: '', loading: false });
+      return;
+    }
+
+    setLiveEmailStatus({ isAvailable: true, message: '', loading: true });
+    
+    // Debounce: Wait 800ms after the user stops typing to ping the database
+    const delayDebounceFn = setTimeout(async () => {
+       const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('email', email.trim());
+       if (count > 0) {
+          setLiveEmailStatus({ isAvailable: false, message: 'Email is already registered.', loading: false });
+       } else {
+          setLiveEmailStatus({ isAvailable: true, message: 'Email is available.', loading: false });
+       }
+    }, 800); 
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [email]);
+
   // --- DATA STATES ---
   const staffEditorRef = useRef(null);
   const logoEditorRef = useRef(null);
@@ -4088,7 +4112,22 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                 if(error) setAppToast({ message: error.message, type: "error" });
               }}>
                {/* REDUCED INPUT HEIGHT: py-3.5 on mobile */}
-               <input type="email" placeholder="Email Address" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 px-4 py-3.5 md:p-4 rounded-xl md:rounded-2xl mb-3 font-bold text-[11px] md:text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
+{/* LIVE EMAIL VALIDATOR */}
+                        <div>
+                          <input type="email" placeholder="Work Email" value={email} onChange={e=>setEmail(e.target.value)} className={`w-full p-4 rounded-2xl font-bold text-xs border-2 outline-none transition-all ${email.includes('@') ? (liveEmailStatus.loading ? 'bg-slate-50 border-blue-300' : liveEmailStatus.isAvailable ? 'bg-emerald-50 border-emerald-500 text-emerald-900 focus:border-emerald-600' : 'bg-rose-50 border-rose-500 text-rose-900 focus:border-rose-600') : 'bg-slate-50 border-transparent focus:border-blue-500'}`}/>
+                          
+                          {email.includes('@') && (
+                            <div className="px-2 mt-1.5 h-4">
+                              {liveEmailStatus.loading ? (
+                                 <span className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1"><Loader2 size={10} className="animate-spin"/> Checking email...</span>
+                              ) : liveEmailStatus.isAvailable ? (
+                                 <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1"><CheckCircle2 size={10}/> {liveEmailStatus.message}</span>
+                              ) : (
+                                 <span className="text-[9px] font-black uppercase text-rose-500 flex items-center gap-1"><AlertCircle size={10}/> {liveEmailStatus.message}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
 
                <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 px-4 py-3.5 md:p-4 rounded-xl md:rounded-2xl mb-4 font-bold text-[11px] md:text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
 
@@ -4235,7 +4274,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                         </select>
                       </div>
                       
-<button type="submit" disabled={loading || (confirmPassword.length > 0 && password !== confirmPassword) || (joinCode.length === 6 && !liveCodeStatus.isValid)} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-500 disabled:opacity-50 transition-all mb-6 shadow-xl active:scale-95">
+           <button type="submit" disabled={loading || !liveEmailStatus.isAvailable || (confirmPassword.length > 0 && password !== confirmPassword) || (regMode === 'join' && joinCode.length === 6 && !liveCodeStatus.isValid)} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-500 disabled:opacity-50 transition-all mb-6 shadow-xl active:scale-95">            
                         {loading ? "Processing..." : "Send Verification Code"}
                       </button>
                     </>
