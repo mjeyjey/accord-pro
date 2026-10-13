@@ -15,7 +15,7 @@ import GlobalResourceMonitor from './components/GlobalResourceMonitor';
 
 import {
   LayoutDashboard, Printer, Activity, Zap, LogOut, Lock, User, 
-  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Headphones, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu
+  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Headphones, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu, Eye, EyeOff
 } from 'lucide-react';
 
 
@@ -2492,6 +2492,9 @@ function App() {
   // --- AUTH & REGISTRATION STATES ---
   const [email, setEmail] = useStickyState('', 'draft_email');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // --- PASSWORD RECOVERY STATES ---
   const [forgotStep, setForgotStep] = useState('email'); 
@@ -3418,9 +3421,17 @@ const handleVerifyCurrentPassword = async (e) => {
   };
 
 const executeRegistration = async () => {
+    if (password !== confirmPassword) {
+      return setAppToast({ message: "Passwords do not match. Please try again.", type: "error" });
+    }
+    if (password.length < 6) {
+      return setAppToast({ message: "Password must be at least 6 characters.", type: "error" });
+    }
+    
     setLoading(true);
     try {
       if (regMode === 'join') {
+
         if (!joinCode.trim()) throw new Error("Invite Code is required.");
         const { data: dData, error: dErr } = await supabase.from('departments').select('university, code').eq('invite_code', joinCode.toUpperCase().trim()).maybeSingle();
         if (dErr || !dData) throw new Error("Invalid or expired Invite Code. Please check with your Administrator.");
@@ -4150,10 +4161,23 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                   ) : (
                     /* --- JOIN WORKSPACE INPUTS --- */
                     <>
-                      <div className="space-y-3 mb-6">
+                     <div className="space-y-3 mb-6">
                         <input type="text" placeholder="Full Name (e.g. Juan Dela Cruz)" value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
                         <input type="email" placeholder="Work Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
-                        <input type="password" placeholder="Create Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
+                        
+                        <div className="relative">
+                          <input type={showPassword ? "text" : "password"} placeholder="Create Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 p-4 pr-12 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+
+                        <div className="relative">
+                          <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="w-full bg-slate-50 p-4 pr-12 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all"/>
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                         
                         <input type="text" placeholder="6-Character Invite Code (e.g. X7B9PQ)" value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase())} className="w-full bg-blue-50 p-4 rounded-2xl font-black text-xs text-blue-800 border-2 border-transparent focus:border-blue-500 outline-none transition-all tracking-widest uppercase"/>
                         <select value={regRole} onChange={e=>setRegRole(e.target.value)} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none">
