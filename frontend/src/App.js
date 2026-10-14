@@ -4837,99 +4837,109 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
 {showChat && <ChatPanel profile={profile} allProfiles={allProfiles} departments={departments} onClose={() => { setShowChat(false); setChatTarget({ roomId: null, messageId: null }); }} onViewProctor={(p) => { setShowChat(false); setViewingProctor(p); }} chatTarget={chatTarget} />}
 
 {/* FIXED SECURE NAVBAR */}
-      <aside className="w-full md:w-64 bg-slate-900 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start py-2 md:py-8 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100] px-0 md:px-4">
-        <div className="hidden md:flex justify-start items-center mb-10 px-2 hover:scale-105 transition-transform cursor-pointer gap-3 relative z-10 border-0 bg-transparent">
-          <img src={accordLogo} alt="Accord Pro Logo" className="w-10 h-10 object-contain brightness-0 invert drop-shadow-lg opacity-90 bg-transparent border-0" />
-          <span className="text-white text-lg font-black uppercase tracking-widest italic">Accord <span className="text-blue-500">Pro</span></span>
+     {/* FIXED SECURE NAVBAR (SCALABLE / EXPANDABLE) */}
+      <aside className={`w-full ${isSidebarExpanded ? 'md:w-64' : 'md:w-24'} bg-slate-900 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start py-2 md:py-6 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100] transition-all duration-300 ease-in-out`}>
+        
+        {/* Clickable Logo Toggle (Expands/Collapses Sidebar) */}
+        <div 
+          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)} 
+          className={`hidden md:flex items-center mb-10 transition-all duration-300 cursor-pointer group ${isSidebarExpanded ? 'px-6 justify-start' : 'justify-center'}`}
+          title={isSidebarExpanded ? "Collapse Menu" : "Expand Menu"}
+        >
+          <img src={accordLogo} alt="Accord Pro Logo" className="w-10 h-10 object-contain brightness-0 invert drop-shadow-lg opacity-90 transition-transform group-hover:scale-110 shrink-0" />
+          {isSidebarExpanded && <span className="text-white text-xl font-black uppercase tracking-widest italic whitespace-nowrap ml-3 animate-in fade-in duration-500">Accord <span className="text-blue-500">Pro</span></span>}
         </div>
         
-        <button 
-          id="tour-nav-dashboard"
-          onClick={() => setActiveTab("dashboard")}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <LayoutDashboard size={24} className="md:w-6 md:h-6 shrink-0" />
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Dashboard</span>
-        </button>
-
-        <button 
-          id="tour-nav-users"
-          onClick={() => setActiveTab("users")}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <Users size={24} className="md:w-6 md:h-6 shrink-0" />
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Staff Registry</span>
-        </button>
-
-        <button 
-          id="tour-ai-btn"
-          onClick={() => setIsAIOpen(true)}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <Headphones size={24} className="md:w-6 md:h-6 shrink-0" />
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">AI Assistant</span>
-        </button>
-
-        <button 
-          id="tour-chat-btn"
-          onClick={handleOpenChat}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showChat ? 'bg-indigo-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <div className="relative">
-            <MessageSquare size={24} className="md:w-6 md:h-6 shrink-0" />
-            {unreadMessageCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-900 text-[8px] font-black text-white shadow-lg animate-bounce">
-                {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-              </span>
-            )}
-          </div>
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Campus Chat</span>
-        </button>
-
-        <button 
-          id="tour-notify-btn"
-          onClick={() => setShowNotifications(true)}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showNotifications ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <div className="relative">
-            <Bell size={24} className="md:w-6 md:h-6 shrink-0" />
-            {notifications?.filter(n => !n.is_read).length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse border border-slate-900"/>}
-          </div>
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Notifications</span>
-        </button>
-
-        <button 
-          id="tour-help-btn"
-          onClick={() => setShowHelp(true)}
-          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showHelp ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
-        >
-          <HelpCircle size={24} className="md:w-6 md:h-6 shrink-0" />
-          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Help Center</span>
-        </button>
-        
-        <div className="md:mt-auto flex flex-row md:flex-col gap-1 md:gap-2">
+        <div className="flex flex-row md:flex-col w-full px-0 md:px-3 gap-0 md:gap-2 h-full">
+          
           <button 
-            id="tour-settings-btn"
-            onClick={() => setShowPasswordModal(true)} 
-            className="group relative p-3 md:p-4 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4"
+            id="tour-nav-dashboard" onClick={() => setActiveTab("dashboard")}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
           >
-            <Settings size={24} className="md:w-6 md:h-6 shrink-0" />
-            <span className="hidden md:block text-xs font-black uppercase tracking-widest">Settings</span>
+            <LayoutDashboard size={24} className="shrink-0" />
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Dashboard</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Dashboard</span>}
           </button>
 
           <button 
-            id="tour-logout-btn" 
-            onClick={handleHardReset} 
-            className="group relative p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4"
+            id="tour-nav-users" onClick={() => setActiveTab("users")}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
           >
-            <LogOut size={24} className="md:w-6 md:h-6 shrink-0" />
-            <span className="hidden md:block text-xs font-black uppercase tracking-widest">Logout</span>
+            <Users size={24} className="shrink-0" />
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Staff Registry</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Staff Registry</span>}
           </button>
+
+          <button 
+            id="tour-ai-btn" onClick={() => setIsAIOpen(true)}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
+          >
+            <Headphones size={24} className="shrink-0" />
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">AI Assistant</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>}
+          </button>
+
+          <button 
+            id="tour-chat-btn" onClick={handleOpenChat}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${showChat ? 'bg-indigo-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
+          >
+            <div className="relative shrink-0">
+              <MessageSquare size={24} />
+              {unreadMessageCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-900 text-[8px] font-black text-white shadow-lg animate-bounce">
+                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                </span>
+              )}
+            </div>
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Campus Chat</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Campus Chat</span>}
+          </button>
+
+          <button 
+            id="tour-notify-btn" onClick={() => setShowNotifications(true)}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${showNotifications ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
+          >
+            <div className="relative shrink-0">
+              <Bell size={24} />
+              {notifications?.filter(n => !n.is_read).length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse border border-slate-900"/>}
+            </div>
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Alerts</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Notifications</span>}
+          </button>
+
+          <button 
+            id="tour-help-btn" onClick={() => setShowHelp(true)}
+            className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${showHelp ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
+          >
+            <HelpCircle size={24} className="shrink-0" />
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Help Center</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Help Center</span>}
+          </button>
+          
+          <div className="md:mt-auto flex flex-row md:flex-col w-full gap-1 md:gap-2">
+            <button 
+              id="tour-settings-btn" onClick={() => setShowPasswordModal(true)} 
+              className={`group relative p-3 md:p-4 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'}`}
+            >
+              <Settings size={24} className="shrink-0" />
+              {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Settings</span>}
+              {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Settings</span>}
+            </button>
+
+            <button 
+              id="tour-logout-btn" onClick={handleHardReset} 
+              className={`group relative p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'}`}
+            >
+              <LogOut size={24} className="shrink-0" />
+              {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Logout</span>}
+              {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Logout</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
           {/* PERFECTLY CENTERED MAIN CONTAINER */}
-       <main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full max-w-[100vw] md:max-w-[calc(100vw-16rem)] lg:max-w-[95rem] mx-auto relative md:ml-64 flex flex-col min-w-0"> 
+<main className={`flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full mx-auto relative flex flex-col min-w-0 transition-all duration-300 ease-in-out lg:max-w-[95rem] ${isSidebarExpanded ? 'md:max-w-[calc(100vw-16rem)] md:ml-64' : 'md:max-w-[calc(100vw-6rem)] md:ml-24'}`}>
         {/* TOP METADATA & CRESTS (SIDE-BY-SIDE MOBILE FIX) */}
           <div className="flex flex-row justify-between items-center w-full mb-6 md:mb-8 gap-4 relative z-40">
              
