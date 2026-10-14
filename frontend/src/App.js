@@ -2009,46 +2009,53 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
                 </div>
               </div>
               
-              {/* ACTION BUTTONS (FULL WIDTH GRID ON MOBILE) */}
+             {/* ACTION BUTTONS (FULL WIDTH GRID ON MOBILE) */}
               <div className="grid grid-cols-5 lg:flex gap-2 lg:gap-3 w-full lg:w-auto pt-2 lg:pt-0 border-t border-white/5 lg:border-none mt-2 lg:mt-0">
                 {!isViewMode && (
                   <>
-                    <button id="tour-proctor-ai" onClick={onShowAI} className="bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative shadow-lg shadow-indigo-600/20 flex justify-center items-center" title="Accord AI Support">
+                    <button id="tour-proctor-ai" onClick={onShowAI} className="group bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative shadow-lg shadow-indigo-600/20 flex justify-center items-center">
                       <Headphones size={20} className="lg:w-[18px] lg:h-[18px]" />
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>
                     </button>
 
-                    <button id="tour-proctor-chat" onClick={onShowChat} className="bg-white/10 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
+                    <button id="tour-proctor-chat" onClick={onShowChat} className="group bg-white/10 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
                       <MessageSquare size={20} className="lg:w-[18px] lg:h-[18px]" />
                       {unreadMessageCount > 0 && (
                         <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-900 text-[10px] font-black text-white shadow-lg animate-bounce">
                           {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
                         </span>
                       )}
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Campus Chat</span>
                     </button>
                     
-                    <button id="tour-proctor-help" onClick={onShowHelp} className="bg-white/10 hover:bg-emerald-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
+                    <button id="tour-proctor-help" onClick={onShowHelp} className="group bg-white/10 hover:bg-emerald-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
                       <HelpCircle size={20} className="lg:w-[18px] lg:h-[18px]" />
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Help Center</span>
                     </button>
                     
-                    <button id="tour-proctor-notify" onClick={onShowNotify} className="bg-white/10 hover:bg-blue-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
+                    <button id="tour-proctor-notify" onClick={onShowNotify} className="group bg-white/10 hover:bg-blue-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
                       <Bell size={20} className="lg:w-[18px] lg:h-[18px]" />
                       {notifications?.filter(n => !n.is_read).length > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full animate-pulse border-2 border-slate-900"/>}
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Notifications</span>
                     </button>
                     
-                    <button id="tour-proctor-settings" onClick={onShowPassword} className="bg-white/10 hover:bg-slate-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center" title="Settings & Privacy">
+                    <button id="tour-proctor-settings" onClick={onShowPassword} className="group bg-white/10 hover:bg-slate-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
                       <Settings size={20} className="lg:w-[18px] lg:h-[18px]" />
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Settings</span>
                     </button>
                   </>
                 )}
                 {isViewMode ? (
                   <button onClick={onCloseView} className="col-span-5 w-full bg-rose-500 hover:bg-rose-600 text-white px-4 py-4 lg:py-2.5 rounded-xl transition-all font-black text-[11px] lg:text-[10px] uppercase tracking-widest shadow-xl mt-2 lg:mt-0">Close View</button>
                 ) : (
-                  <button id="tour-proctor-logout" onClick={onLogout} className="col-span-5 lg:col-span-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white p-4 lg:p-2.5 rounded-xl transition-all border border-rose-500/20 hover:border-transparent flex justify-center items-center gap-2 lg:gap-0 mt-2 lg:mt-0">
+                  <button id="tour-proctor-logout" onClick={onLogout} className="group col-span-5 lg:col-span-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white p-4 lg:p-2.5 rounded-xl transition-all border border-rose-500/20 hover:border-transparent flex justify-center items-center gap-2 lg:gap-0 mt-2 lg:mt-0 relative">
                     <LogOut size={18} />
                     <span className="lg:hidden text-[11px] font-black uppercase tracking-widest">Sign Out</span>
+                    <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Sign Out</span>
                   </button>
                 )}
               </div>
+
             </div>
         </nav> 
        
@@ -4830,100 +4837,99 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
 {showChat && <ChatPanel profile={profile} allProfiles={allProfiles} departments={departments} onClose={() => { setShowChat(false); setChatTarget({ roomId: null, messageId: null }); }} onViewProctor={(p) => { setShowChat(false); setViewingProctor(p); }} chatTarget={chatTarget} />}
 
 {/* FIXED SECURE NAVBAR */}
-      <aside className="w-full md:w-24 bg-slate-900 flex flex-row md:flex-col items-center justify-around md:justify-start py-2 md:py-10 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100]">
-        <div className="hidden md:flex justify-center items-center mb-12 hover:scale-105 transition-transform cursor-pointer relative group bg-transparent border-0">
-          <img 
-            src={accordLogo} 
-            alt="Accord Pro Logo" 
-            className="w-12 h-12 object-contain brightness-0 invert drop-shadow-lg opacity-90 bg-transparent border-0" 
-          />
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Accord Home</span>
+      <aside className="w-full md:w-64 bg-slate-900 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start py-2 md:py-8 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100] px-0 md:px-4">
+        <div className="hidden md:flex justify-start items-center mb-10 px-2 hover:scale-105 transition-transform cursor-pointer gap-3 relative z-10 border-0 bg-transparent">
+          <img src={accordLogo} alt="Accord Pro Logo" className="w-10 h-10 object-contain brightness-0 invert drop-shadow-lg opacity-90 bg-transparent border-0" />
+          <span className="text-white text-lg font-black uppercase tracking-widest italic">Accord <span className="text-blue-500">Pro</span></span>
         </div>
         
         <button 
           id="tour-nav-dashboard"
           onClick={() => setActiveTab("dashboard")}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <LayoutDashboard size={24} className="md:w-7 md:h-7" />
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Dashboard</span>
+          <LayoutDashboard size={24} className="md:w-6 md:h-6 shrink-0" />
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Dashboard</span>
         </button>
 
         <button 
           id="tour-nav-users"
           onClick={() => setActiveTab("users")}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <Users size={24} className="md:w-7 md:h-7" />
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Staff Registry</span>
+          <Users size={24} className="md:w-6 md:h-6 shrink-0" />
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Staff Registry</span>
         </button>
 
         <button 
           id="tour-ai-btn"
           onClick={() => setIsAIOpen(true)}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${isAIOpen ? 'bg-blue-600 text-white shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <Headphones size={24} className="md:w-7 md:h-7" />
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>
+          <Headphones size={24} className="md:w-6 md:h-6 shrink-0" />
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">AI Assistant</span>
         </button>
 
         <button 
           id="tour-chat-btn"
           onClick={handleOpenChat}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${showChat ? 'bg-indigo-500 text-white shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showChat ? 'bg-indigo-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <MessageSquare size={24} className="md:w-7 md:h-7" />
-          {unreadMessageCount > 0 && (
-            <span className="absolute top-1 right-1 md:top-3 md:right-3 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-900 text-[8px] md:text-[10px] font-black text-white shadow-lg animate-bounce">
-              {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-            </span>
-          )}
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Campus Chat</span>
+          <div className="relative">
+            <MessageSquare size={24} className="md:w-6 md:h-6 shrink-0" />
+            {unreadMessageCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-900 text-[8px] font-black text-white shadow-lg animate-bounce">
+                {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+              </span>
+            )}
+          </div>
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Campus Chat</span>
         </button>
 
         <button 
           id="tour-notify-btn"
           onClick={() => setShowNotifications(true)}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${showNotifications ? 'bg-white text-slate-900 shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showNotifications ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <Bell size={24} className="md:w-7 md:h-7" />
-          {notifications?.filter(n => !n.is_read).length > 0 && <span className="absolute top-2 right-2 md:top-4 md:right-4 w-3 h-3 bg-rose-500 rounded-full animate-pulse border-2 border-slate-900"/>}
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Notifications</span>
+          <div className="relative">
+            <Bell size={24} className="md:w-6 md:h-6 shrink-0" />
+            {notifications?.filter(n => !n.is_read).length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse border border-slate-900"/>}
+          </div>
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Notifications</span>
         </button>
 
         <button 
           id="tour-help-btn"
           onClick={() => setShowHelp(true)}
-          className={`group relative p-3 md:p-5 md:mb-6 rounded-2xl transition-all active:scale-90 ${showHelp ? 'bg-emerald-500 text-white shadow-2xl' : 'text-slate-500 hover:bg-white/10'}`}
+          className={`group relative p-3 md:p-4 md:mb-2 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4 ${showHelp ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
         >
-          <HelpCircle size={24} className="md:w-7 md:h-7" />
-          <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Help Center</span>
+          <HelpCircle size={24} className="md:w-6 md:h-6 shrink-0" />
+          <span className="hidden md:block text-xs font-black uppercase tracking-widest">Help Center</span>
         </button>
         
-        <div className="md:mt-auto flex flex-row md:flex-col gap-1 md:gap-4">
+        <div className="md:mt-auto flex flex-row md:flex-col gap-1 md:gap-2">
           <button 
             id="tour-settings-btn"
             onClick={() => setShowPasswordModal(true)} 
-            className="group relative p-3 md:p-5 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-90"
+            className="group relative p-3 md:p-4 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4"
           >
-            <Settings size={24} className="md:w-7 md:h-7" />
-            <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Settings</span>
+            <Settings size={24} className="md:w-6 md:h-6 shrink-0" />
+            <span className="hidden md:block text-xs font-black uppercase tracking-widest">Settings</span>
           </button>
 
           <button 
             id="tour-logout-btn" 
             onClick={handleHardReset} 
-            className="group relative p-3 md:p-5 text-rose-500 hover:bg-rose-500/20 rounded-2xl transition-all active:scale-90"
+            className="group relative p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all active:scale-95 flex items-center justify-center md:justify-start gap-4"
           >
-            <LogOut size={24} className="md:w-7 md:h-7" />
-            <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Logout</span>
+            <LogOut size={24} className="md:w-6 md:h-6 shrink-0" />
+            <span className="hidden md:block text-xs font-black uppercase tracking-widest">Logout</span>
           </button>
         </div>
       </aside>
 
           {/* PERFECTLY CENTERED MAIN CONTAINER */}
-   <main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full max-w-[100vw] md:max-w-[calc(100vw-6rem)] lg:max-w-[95rem] mx-auto relative md:ml-24 flex flex-col min-w-0">
-        
+       <main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full max-w-[100vw] md:max-w-[calc(100vw-16rem)] lg:max-w-[95rem] mx-auto relative md:ml-64 flex flex-col min-w-0"> 
         {/* TOP METADATA & CRESTS (SIDE-BY-SIDE MOBILE FIX) */}
           <div className="flex flex-row justify-between items-center w-full mb-6 md:mb-8 gap-4 relative z-40">
              
@@ -5056,7 +5062,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
                       </div>
                     </div>
 
-                    <div className="relative z-[200] flex flex-col md:flex-row items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
+<div className="relative z-10 flex flex-col md:flex-row items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
                      {isHeadAdmin && (
                         <button onClick={() => setDeptModal({ isOpen: true, step: 1, name: '', code: '', campusSelect: departments[0]?.campus_location || 'Main', customCampus: '' })} className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/50 active:scale-95 transition-all flex items-center justify-center gap-2">
                           <Plus size={16} /> Add Workspace
