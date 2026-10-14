@@ -15,7 +15,7 @@ import GlobalResourceMonitor from './components/GlobalResourceMonitor';
 
 import {
   LayoutDashboard, Printer, Activity, Zap, LogOut, Lock, User, 
-  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Headphones, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu, Loader2, Eye, EyeOff,  isSidebarExpanded
+  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Headphones, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu, Loader2, Eye, EyeOff
 } from 'lucide-react';
 
 
@@ -2575,7 +2575,9 @@ function App() {
   const [viewingProctor, setViewingProctor] = useState(null);
   
   // --- UI & MODAL STATES ---
+  const [isSidebarExpanded, setIsSidebarExpanded] = useStickyState(true, 'sidebar_expanded');
   const [notifications, setNotifications] = useState([]);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showChat, setShowChat] = useState(false);
