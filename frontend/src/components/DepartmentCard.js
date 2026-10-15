@@ -6,7 +6,7 @@ import {
   Trash2, Plus, Play, Clock, Calendar, Download,
   ShieldCheck, Globe, Home, BookOpen, ChevronRight, ChevronLeft,
   Settings2, Users, RefreshCw, CheckCircle2, AlertCircle,
-  LayoutGrid, AlertTriangle, Edit3, ArrowUp, ArrowDown, Lock, X, Info, Layers, DoorOpen, HelpCircle, Headphones, Search, Sparkles
+  LayoutGrid, AlertTriangle, Edit3, ArrowUp, ArrowDown, Lock, X, Info, Layers, DoorOpen, HelpCircle, Headphones, Search, Sparkles, Loader2
 } from 'lucide-react';
 
 // --- HELPER FUNCTIONS ---
