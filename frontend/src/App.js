@@ -15,7 +15,7 @@ import GlobalResourceMonitor from './components/GlobalResourceMonitor';
 
 import {
   LayoutDashboard, Printer, Activity, Zap, LogOut, Lock, User, 
-  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Headphones, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu, Loader2, Eye, EyeOff
+  RefreshCw, Globe, Home, Calendar, List, Users, Shield, ShieldCheck,  UserPlus, Trash2, Archive, CheckCircle, Plus, Clock, AlertOctagon, Download, Bell, BellRing, AlertTriangle, X, Upload, CheckCircle2, AlertCircle, HelpCircle, ArrowRight, MessageSquare, Send, Search, ArrowLeft, Reply, Edit2, MoreVertical, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Settings, Play, Sparkles, Paperclip, Image as ImageIcon, FileText, DownloadCloud, UserMinus, Hash, Info, MoreHorizontal, Folder, Menu, Loader2, Eye, EyeOff
 } from 'lucide-react';
 
 
@@ -2014,7 +2014,7 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
                 {!isViewMode && (
                   <>
                     <button id="tour-proctor-ai" onClick={onShowAI} className="group bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative shadow-lg shadow-indigo-600/20 flex justify-center items-center">
-                      <Headphones size={20} className="lg:w-[18px] lg:h-[18px]" />
+                      <Sparkles size={20} className="lg:w-[18px] lg:h-[18px]" />
                       <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>
                     </button>
 
@@ -2095,7 +2095,7 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
                 onClick={onShowAI} 
                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-1.5"
               >
-                <Headphones size={14} /> Need Help?
+                <Sparkles size={14} /> Need Help?
               </button>
               <button 
                 onClick={() => { setShowGuide(false); localStorage.setItem('accord_proctor_guide', 'hidden'); }} 
@@ -4362,7 +4362,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
             onClick={() => setIsAIOpen(true)} 
             className="fixed bottom-8 right-8 z-[100] bg-slate-900 text-white px-5 py-4 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.3)] flex items-center gap-3 hover:bg-blue-600 transition-all border border-slate-700 hover:scale-105 group animate-in slide-in-from-bottom-10"
           >
-            <Headphones size={20} className="text-blue-400 group-hover:text-white transition-colors" />
+            <Sparkles size={20} className="text-blue-400 group-hover:text-white transition-colors" />
             <span className="text-[10px] font-black uppercase tracking-widest">Need Help?</span>
           </button>
         )}
@@ -4839,13 +4839,13 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
 {showChat && <ChatPanel profile={profile} allProfiles={allProfiles} departments={departments} onClose={() => { setShowChat(false); setChatTarget({ roomId: null, messageId: null }); }} onViewProctor={(p) => { setShowChat(false); setViewingProctor(p); }} chatTarget={chatTarget} />}
 
 {/* FIXED SECURE NAVBAR */}
-     {/* FIXED SECURE NAVBAR (SCALABLE / EXPANDABLE) */}
-      <aside className={`w-full ${isSidebarExpanded ? 'md:w-64' : 'md:w-24'} bg-slate-900 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start py-2 md:py-6 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100] transition-all duration-300 ease-in-out`}>
+   {/* FIXED SECURE NAVBAR (SCALABLE / EXPANDABLE) */}
+      <aside className={`w-full ${isSidebarExpanded ? 'md:w-64' : 'md:w-24'} bg-slate-900 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start py-2 md:py-6 fixed bottom-0 left-0 md:top-0 h-20 md:h-screen shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl border-t-4 md:border-t-0 md:border-r-8 border-blue-600 z-[100] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]`}>
         
         {/* Clickable Logo Toggle (Expands/Collapses Sidebar) */}
         <div 
           onClick={() => setIsSidebarExpanded(!isSidebarExpanded)} 
-          className={`hidden md:flex items-center mb-10 transition-all duration-300 cursor-pointer group ${isSidebarExpanded ? 'px-6 justify-start' : 'justify-center'}`}
+          className={`hidden md:flex items-center mb-10 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer group ${isSidebarExpanded ? 'px-6 justify-start' : 'justify-center'}`}
           title={isSidebarExpanded ? "Collapse Menu" : "Expand Menu"}
         >
           <img src={accordLogo} alt="Accord Pro Logo" className="w-10 h-10 object-contain brightness-0 invert drop-shadow-lg opacity-90 transition-transform group-hover:scale-110 shrink-0" />
@@ -4876,7 +4876,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
             id="tour-ai-btn" onClick={() => setIsAIOpen(true)}
             className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
           >
-            <Headphones size={24} className="shrink-0" />
+            <Headset size={24} className="shrink-0" />
             {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">AI Assistant</span>}
             {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>}
           </button>
@@ -4921,7 +4921,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
           <div className="md:mt-auto flex flex-row md:flex-col w-full gap-1 md:gap-2">
             <button 
               id="tour-settings-btn" onClick={() => setShowPasswordModal(true)} 
-              className={`group relative p-3 md:p-4 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'}`}
+              className={`group relative p-3 md:p-4 text-slate-500 hover:bg-white/10 hover:text-white rounded-2xl transition-all active:scale-95 flex items-center ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} gap-4`}
             >
               <Settings size={24} className="shrink-0" />
               {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Settings</span>}
@@ -4930,7 +4930,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
 
             <button 
               id="tour-logout-btn" onClick={handleHardReset} 
-              className={`group relative p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'}`}
+              className={`group relative p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all active:scale-95 flex items-center ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} gap-4`}
             >
               <LogOut size={24} className="shrink-0" />
               {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Logout</span>}
@@ -4941,7 +4941,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
       </aside>
 
           {/* PERFECTLY CENTERED MAIN CONTAINER */}
-<main className={`flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full mx-auto relative flex flex-col min-w-0 transition-all duration-300 ease-in-out lg:max-w-[95rem] ${isSidebarExpanded ? 'md:max-w-[calc(100vw-16rem)] md:ml-64' : 'md:max-w-[calc(100vw-6rem)] md:ml-24'}`}>
+<main className={`flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full md:max-w-[calc(100vw-6rem)] lg:max-w-[95rem] mx-auto relative flex flex-col min-w-0 md:ml-24 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isSidebarExpanded ? 'md:translate-x-40' : 'translate-x-0'}`}>
         {/* TOP METADATA & CRESTS (SIDE-BY-SIDE MOBILE FIX) */}
           <div className="flex flex-row justify-between items-center w-full mb-6 md:mb-8 gap-4 relative z-40">
              
