@@ -4876,7 +4876,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
             id="tour-ai-btn" onClick={() => setIsAIOpen(true)}
             className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
           >
-            <Headset size={24} className="shrink-0" />
+            <Sparkles size={24} className="shrink-0" />
             {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">AI Assistant</span>}
             {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>}
           </button>
