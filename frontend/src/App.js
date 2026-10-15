@@ -2575,7 +2575,7 @@ function App() {
   const [viewingProctor, setViewingProctor] = useState(null);
   
   // --- UI & MODAL STATES ---
-  const [isSidebarExpanded, setIsSidebarExpanded] = useStickyState(true, 'sidebar_expanded');
+const [isSidebarExpanded, setIsSidebarExpanded] = useStickyState(false, 'sidebar_expanded');
   const [notifications, setNotifications] = useState([]);
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -4941,7 +4941,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
       </aside>
 
           {/* PERFECTLY CENTERED MAIN CONTAINER */}
-<main className={`flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full md:max-w-[calc(100vw-6rem)] lg:max-w-[95rem] mx-auto relative flex flex-col min-w-0 md:ml-24 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isSidebarExpanded ? 'md:translate-x-40' : 'translate-x-0'}`}>
+<main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full md:max-w-[calc(100vw-6rem)] lg:max-w-[95rem] mx-auto relative flex flex-col min-w-0 md:ml-24">
         {/* TOP METADATA & CRESTS (SIDE-BY-SIDE MOBILE FIX) */}
           <div className="flex flex-row justify-between items-center w-full mb-6 md:mb-8 gap-4 relative z-40">
              
