@@ -6,7 +6,7 @@ import {
   Trash2, Plus, Play, Clock, Calendar, Download,
   ShieldCheck, Globe, Home, BookOpen, ChevronRight, ChevronLeft,
   Settings2, Users, RefreshCw, CheckCircle2, AlertCircle,
-  LayoutGrid, AlertTriangle, Edit3, ArrowUp, ArrowDown, Lock, X, Info, Layers, DoorOpen, HelpCircle, Headphones, Search, Loader2
+  LayoutGrid, AlertTriangle, Edit3, ArrowUp, ArrowDown, Lock, X, Info, Layers, DoorOpen, HelpCircle, Headphones, Search
 } from 'lucide-react';
 
 // --- HELPER FUNCTIONS ---
@@ -119,7 +119,7 @@ const TabTutorial = ({ title, description, onShowAI, storageKey }) => {
        </div>
        <div className="relative z-10 flex gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0">
          <button onClick={onShowAI} className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2 active:scale-95">
-           <Headphones size={14} /> Need Help?
+           <Sparkles size={14} /> Need Help?
          </button>
          <button onClick={handleDismiss} className="bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-500 p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all active:scale-95" title="Dismiss Guide">
            <X size={14} />
