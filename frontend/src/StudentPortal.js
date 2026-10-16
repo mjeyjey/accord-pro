@@ -186,7 +186,6 @@ const StudentPortal = ({ onBack }) => {
   }, [publicSchedule, viewMode, filterYear, searchQuery]);
 
   // --- PREMIUM EXECUTIVE PDF EXPORT ENGINE ---
- // --- PREMIUM EXECUTIVE PDF EXPORT ENGINE ---
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
@@ -281,16 +280,17 @@ const StudentPortal = ({ onBack }) => {
             `${formatTime(item.start_time)}\n${formatTime(item.end_time)}`,
             item.subject_code,
             item.subject_name,
-            item.room
+            item.room,
+            item.proctor || "TBA" // <-- ADDED PROCTOR DATA
           ]);
 
           autoTable(doc, {
             head: [
               [
-                // THE FIX: colSpan explicitly set to 4 to match the 4 columns below!
-                { content: `DATE: ${date.toUpperCase()}  |  ${section.toUpperCase()}`, colSpan: 4, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 10 } }
+                // BUMPED COLSPAN TO 5
+                { content: `DATE: ${date.toUpperCase()}  |  ${section.toUpperCase()}`, colSpan: 5, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 10 } }
               ],
-              ["TIME", "CODE", "SUBJECT", "ROOM"]
+              ["TIME", "CODE", "SUBJECT", "ROOM", "PROCTOR"] // <-- ADDED PROCTOR HEADER
             ],
             body: tableRows,
             startY: isFirstSection ? 40 : currentY,
@@ -315,13 +315,13 @@ const StudentPortal = ({ onBack }) => {
               lineWidth: 0.1
             },
             columnStyles: {
-              0: { halign: 'center', fontStyle: 'bold', cellWidth: 28 }, 
-              1: { halign: 'center', fontStyle: 'bold', cellWidth: 32 },
+              0: { halign: 'center', fontStyle: 'bold', cellWidth: 26 }, 
+              1: { halign: 'center', fontStyle: 'bold', cellWidth: 24 },
               2: { halign: 'left' },
-              3: { halign: 'center', fontStyle: 'bold', cellWidth: 28, textColor: [37, 99, 235] } 
+              3: { halign: 'center', fontStyle: 'bold', cellWidth: 20, textColor: [37, 99, 235] },
+              4: { halign: 'center', cellWidth: 38 } // <-- ALLOCATED WIDTH FOR PROCTOR
             },
             alternateRowStyles: { fillColor: [248, 250, 252] }, 
-            // THE FIX: Explicit Top Margin so it never hits the letterhead on new pages!
             margin: { top: 40, bottom: 30, left: 14, right: 14 },
             pageBreak: 'avoid',
             didDrawPage: (data) => {
@@ -339,7 +339,7 @@ const StudentPortal = ({ onBack }) => {
               doc.text(`Generated securely by Accord Pro System: ${printDate}`, 14, doc.internal.pageSize.getHeight() - 10);
               doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
             }
-          });
+          });  
           
           currentY = doc.lastAutoTable.finalY;
           isFirstSection = false;
