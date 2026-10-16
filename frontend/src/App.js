@@ -1866,7 +1866,7 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
         doc.setTextColor(37, 99, 235); // Accord Blue
         doc.text("PRO", 30 + accordWidth, 20);
 
-        // Clean Subtitle (Removed the pipe character, made it uppercase & bold)
+        // Clean Subtitle
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         doc.setTextColor(100, 116, 139); // Slate 500
@@ -1897,15 +1897,16 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
           item.dept_code || "N/A",
           item.section || "N/A",
           `${item.subject_code || "N/A"} - ${item.subject_name || "N/A"}`,
-          item.room || "N/A"
+          item.room || "N/A",
+          item.proctor || proctorName
         ]);
 
         autoTable(doc, { 
           head: [
             [
-              { content: `EXAM DATE: ${date}`, colSpan: 5, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 11 } }
+              { content: `EXAM DATE: ${date}`, colSpan: 6, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 11 } }
             ],
-            ["Time", "Department", "Section", "Subject", "Room"]
+            ["Time", "Department", "Section", "Subject", "Room", "Proctor"]
           ],
           body: tableRows, 
           startY: currentY, 
@@ -1931,9 +1932,9 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
   const handleExportExcel = () => {
     try {
       if (!confirmedAssignments || confirmedAssignments.length === 0) return showToast("No confirmed assignments to export!", "error");
-      const headers = ["Date,Time,Department,Subject Code,Subject Name,Section,Room"];
+      const headers = ["Date,Time,Department,Subject Code,Subject Name,Section,Room,Proctor"];
       const sorted = [...confirmedAssignments].sort((a, b) => new Date(a.exam_date || 0) - new Date(b.exam_date || 0) || (a.start_time || "").localeCompare(b.start_time || ""));
-      const rows = sorted.map(item => `${item.exam_date || "N/A"},${item.start_time ? formatTime(item.start_time) : "--:--"} - ${item.end_time ? formatTime(item.end_time) : "--:--"},${item.dept_code || "N/A"},${item.subject_code || ""},"${item.subject_name || ""}",${item.section || "N/A"},${item.room || "N/A"}`);
+      const rows = sorted.map(item => `${item.exam_date || "N/A"},${item.start_time ? formatTime(item.start_time) : "--:--"} - ${item.end_time ? formatTime(item.end_time) : "--:--"},${item.dept_code || "N/A"},${item.subject_code || ""},"${item.subject_name || ""}",${item.section || "N/A"},${item.room || "N/A"},"${item.proctor || profile?.full_name}"`);
       const csvContent = headers.concat(rows).join("\n");
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
@@ -2015,7 +2016,7 @@ const ProctorDashboard = ({ profile, globalSchedule, allExamDates, globalAvailab
                   <>
                     <button id="tour-proctor-ai" onClick={onShowAI} className="group bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative shadow-lg shadow-indigo-600/20 flex justify-center items-center">
                       <Sparkles size={20} className="lg:w-[18px] lg:h-[18px]" />
-                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>
+                      <span className="hidden lg:block absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Chat Bot</span>
                     </button>
 
                     <button id="tour-proctor-chat" onClick={onShowChat} className="group bg-white/10 hover:bg-indigo-500 text-white p-3.5 lg:p-2.5 rounded-xl transition-all relative flex justify-center items-center">
@@ -4877,8 +4878,8 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
             className={`group relative p-3 md:p-4 rounded-2xl transition-all active:scale-95 flex items-center gap-4 ${isSidebarExpanded ? 'justify-start px-5' : 'justify-center'} ${isAIOpen ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/10 hover:text-white'}`}
           >
             <Sparkles size={24} className="shrink-0" />
-            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">AI Assistant</span>}
-            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">AI Assistant</span>}
+            {isSidebarExpanded && <span className="hidden md:block text-xs font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in">Chat Bot</span>}
+            {!isSidebarExpanded && <span className="hidden md:block absolute left-full ml-4 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">Chat Bot</span>}
           </button>
 
           <button 
@@ -4941,7 +4942,7 @@ const [deptModal, setDeptModal] = useState({ isOpen: false, step: 1, name: '', c
       </aside>
 
           {/* PERFECTLY CENTERED MAIN CONTAINER */}
-<main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full md:max-w-[calc(100vw-6rem)] lg:max-w-[95rem] mx-auto relative flex flex-col min-w-0 md:ml-24">
+<main className={`flex-1 p-4 md:p-8 lg:p-12 pb-32 md:pb-16 w-full relative flex flex-col min-w-0 transition-all duration-500 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-24'}`}>
         {/* TOP METADATA & CRESTS (SIDE-BY-SIDE MOBILE FIX) */}
           <div className="flex flex-row justify-between items-center w-full mb-6 md:mb-8 gap-4 relative z-40">
              
