@@ -186,6 +186,7 @@ const StudentPortal = ({ onBack }) => {
   }, [publicSchedule, viewMode, filterYear, searchQuery]);
 
   // --- PREMIUM EXECUTIVE PDF EXPORT ENGINE ---
+ // --- PREMIUM EXECUTIVE PDF EXPORT ENGINE ---
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
@@ -227,62 +228,54 @@ const StudentPortal = ({ onBack }) => {
         deptLogoData = null;
       }
 
-      let isFirstPage = true;
+      // 1. UPGRADED UNIVERSAL LETTERHEAD
+      const drawLetterhead = (data) => {
+        if (!doc.headerPrintedPages) doc.headerPrintedPages = new Set();
+        if (doc.headerPrintedPages.has(data.pageNumber)) return;
+        doc.headerPrintedPages.add(data.pageNumber);
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        if (uniLogoData) doc.addImage(uniLogoData, 'PNG', 14, 12, 18, 18);
+        if (deptLogoData) doc.addImage(deptLogoData, 'PNG', pageWidth - 32, 12, 18, 18);
+
+        // PREMIUM MODERN IDENTITY: Pure Helvetica, clean hierarchy
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(15, 23, 42); // Slate 900
+        doc.text(uniName.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139); // Slate 600
+        doc.text(`${deptName.toUpperCase()} (${deptCode}) • ${campusName.toUpperCase()} CAMPUS`, pageWidth / 2, 23, { align: 'center' });
+
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(8);
+        doc.setTextColor(37, 99, 235); // Blue 600
+        doc.text(`OFFICIAL SECTION ITINERARY`, pageWidth / 2, 27, { align: 'center' });
+
+        // Modern Border Divides
+        doc.setDrawColor(15, 23, 42); // Slate 900
+        doc.setLineWidth(0.6);
+        doc.line(14, 32, pageWidth - 14, 32);
+        
+        doc.setDrawColor(226, 232, 240); // Slate 300
+        doc.setLineWidth(0.2);
+        doc.line(14, 33, pageWidth - 14, 33);
+      };
+
+      let currentY = 40;
+      let isFirstSection = true;
 
       Object.keys(processedSchedule).sort().forEach(date => {
         Object.keys(processedSchedule[date]).sort().forEach(section => {
           
-          if (!isFirstPage) doc.addPage();
-          isFirstPage = false;
+          if (!isFirstSection) {
+              // Add a nice gap between distinct sections
+              currentY += 10;
+          }
           
-          const pageWidth = doc.internal.pageSize.getWidth();
-          
-          if (uniLogoData) doc.addImage(uniLogoData, 'PNG', 14, 14, 24, 24);
-          if (deptLogoData) doc.addImage(deptLogoData, 'PNG', pageWidth - 38, 14, 24, 24);
-
-          // PREMIUM MODERN IDENTITY: Pure Helvetica, clean hierarchy
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(18);
-          doc.setTextColor(15, 23, 42); // Slate 900
-          doc.text(uniName.toUpperCase(), pageWidth / 2, 22, { align: 'center' });
-          
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.setTextColor(100, 116, 139); // Slate 600
-          doc.text(`${deptName.toUpperCase()} (${deptCode}) • ${campusName.toUpperCase()} CAMPUS`, pageWidth / 2, 28, { align: 'center' });
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.setTextColor(37, 99, 235); // Blue 600
-          doc.text(`OFFICIAL SECTION ITINERARY`, pageWidth / 2, 33, { align: 'center' });
-
-          // Modern Border Divides
-          doc.setDrawColor(15, 23, 42); // Slate 900
-          doc.setLineWidth(0.8);
-          doc.line(14, 40, pageWidth - 14, 40);
-          
-          doc.setDrawColor(203, 213, 225); // Slate 300
-          doc.setLineWidth(0.2);
-          doc.line(14, 41.5, pageWidth - 14, 41.5);
-
-          let currentY = 50;
-          
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(10);
-          doc.setTextColor(15, 23, 42);
-          doc.text(`EXAM DATE:`, 14, currentY);
-          
-          doc.setFont("helvetica", "normal");
-          doc.text(date.toUpperCase(), 40, currentY);
-          currentY += 6;
-          
-          doc.setFont("helvetica", "bold");
-          doc.text(`SECTION:`, 14, currentY);
-          
-          doc.setFont("helvetica", "normal");
-          doc.text(section.toUpperCase(), 35, currentY);
-          currentY += 10;
-
           const items = processedSchedule[date][section];
           const tableRows = items.map(item => [
             `${formatTime(item.start_time)}\n${formatTime(item.end_time)}`,
@@ -292,9 +285,15 @@ const StudentPortal = ({ onBack }) => {
           ]);
 
           autoTable(doc, {
-            head: [["TIME", "CODE", "SUBJECT", "ROOM"]],
+            head: [
+              [
+                // THE FIX: colSpan explicitly set to 4 to match the 4 columns below!
+                { content: `DATE: ${date.toUpperCase()}  |  ${section.toUpperCase()}`, colSpan: 4, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 10 } }
+              ],
+              ["TIME", "CODE", "SUBJECT", "ROOM"]
+            ],
             body: tableRows,
-            startY: currentY,
+            startY: isFirstSection ? 40 : currentY,
             theme: 'grid', 
             styles: { 
               font: 'helvetica', 
@@ -322,9 +321,13 @@ const StudentPortal = ({ onBack }) => {
               3: { halign: 'center', fontStyle: 'bold', cellWidth: 28, textColor: [37, 99, 235] } 
             },
             alternateRowStyles: { fillColor: [248, 250, 252] }, 
-            margin: { bottom: 30, left: 14, right: 14 },
-            didDrawPage: () => {
+            // THE FIX: Explicit Top Margin so it never hits the letterhead on new pages!
+            margin: { top: 40, bottom: 30, left: 14, right: 14 },
+            pageBreak: 'avoid',
+            didDrawPage: (data) => {
+              drawLetterhead(data);
               const printDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+              const pageWidth = doc.internal.pageSize.getWidth();
               doc.setFont("helvetica", "italic");
               doc.setFontSize(8);
               doc.setTextColor(148, 163, 184); 
@@ -337,6 +340,9 @@ const StudentPortal = ({ onBack }) => {
               doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
             }
           });
+          
+          currentY = doc.lastAutoTable.finalY;
+          isFirstSection = false;
         });
       });
 
