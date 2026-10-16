@@ -45,7 +45,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
     if (!session) return `User is currently on the authentication screen. Auth Mode: ${authMode}. They may need help logging in, resetting a password, or finding an invite code.`;
     if (profile?.status === 'BLOCKED') return `User's account is currently BLOCKED by an admin.`;
     if (profile?.status === 'PENDING') return `User's account is PENDING. They are waiting for a Head Admin to approve their access.`;
-    return `User is logged in as ${profile?.role} in the${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
+    return `User is logged in as ${profile?.role} in the ${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
   };
 
   const getDynamicQuestions = () => {
@@ -100,7 +100,8 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
       
       CURRENT LIVE CONTEXT:
       Time: ${currentTime}
-      Date: ${currentDate}${getUserContext()}
+      Date: ${currentDate}
+      ${getUserContext()}
 
       LIVE SYSTEM DATA (JSON MEMORY):
       ${systemData ? JSON.stringify({
@@ -133,7 +134,6 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
         { role: 'user', content: apiUserContent }
       ];
 
-      // Send request to your Vercel Serverless Function
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +149,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
       setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: reply.trim() }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: "Connection error. Ensure your Groq API key is valid." }]);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: "Connection error. Please check your network or Vercel logs." }]);
     } finally {
       setIsTyping(false);
     }
