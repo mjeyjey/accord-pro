@@ -1,14 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, ShieldCheck, Send, Image as ImageIcon, ChevronRight, Loader2 } from 'lucide-react';
-import Groq from 'groq-sdk';
 import Tesseract from 'tesseract.js';
 import accordLogo from './accord.png';
-import { supabase } from './supabaseClient'; 
-
-const groq = new Groq({
-  apiKey: process.env.REACT_APP_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true 
-});
 
 export default function GlobalAIAssistant({ session, profile, authMode, activeTab, isOpen, onClose }) {
   const [chatInput, setChatInput] = useState('');
@@ -16,50 +9,26 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
   const [extractedText, setExtractedText] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [systemData, setSystemData] = useState(null); 
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'bot', text: 'System Online. I am the Accord Pro Assistant. How can I help you navigate the platform or check schedules today?' }
+    { id: 1, sender: 'bot', text: 'System Online. I am the Accord Pro Assistant. How can I help you navigate the platform today?' }
   ]);
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (isOpen && session && profile?.university) {
-      const fetchLiveContext = async () => {
-        try {
-          const [prof, avail, sched] = await Promise.all([
-            supabase.from('profiles').select('full_name, role, assigned_dept, status').eq('university', profile.university),
-            supabase.from('proctor_availability').select('proctor_name, exam_date, start_time, end_time').eq('university', profile.university),
-            supabase.from('schedules').select('exam_date, start_time, end_time, proctor, room, subject_code, dept_code, flagged').eq('university', profile.university)
-          ]);
-          
-          setSystemData({
-            profiles: prof.data || [],
-            availability: avail.data || [],
-            schedules: sched.data || []
-          });
-        } catch (err) {
-          console.error("Failed to sync AI context:", err);
-        }
-      };
-      fetchLiveContext();
-    }
-  }, [isOpen, session, profile]);
-
   const getUserContext = () => {
     if (!session) return `User is currently on the authentication screen. Auth Mode: ${authMode}. They may need help logging in, resetting a password, or finding an invite code.`;
     if (profile?.status === 'BLOCKED') return `User's account is currently BLOCKED by an admin.`;
     if (profile?.status === 'PENDING') return `User's account is PENDING. They are waiting for a Head Admin to approve their access.`;
-    return `User is logged in as ${profile?.role} in the ${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
+    return `User is logged in as ${profile?.role} in the${profile?.assigned_dept || 'Global'} department. They are currently actively working inside the '${activeTab}' tab.`;
   };
 
   const getDynamicQuestions = () => {
     if (!session) return ["Where do I get an invite code?", "Why is my account pending?"];
-    if (activeTab === 'users') return ["Who are the available proctors?", "How do I edit staff roles?"];
-    if (activeTab === 'dashboard') return ["Who is available to proctor today?", "How does Reliever Logic work?"];
-    if (activeTab === 'generate' || activeTab === 'preview') return ["What is the Conflict of Interest rule?", "Are there any double-bookings?"];
-    return ["Who is available today?", "How does Global Room Pooling work?"];
+    if (activeTab === 'users') return ["How do I approve a pending user?", "How do I edit staff roles?"];
+    if (activeTab === 'dashboard') return ["How does Reliever Logic work?", "How do I resolve a double-booking?"];
+    if (activeTab === 'generate' || activeTab === 'preview') return ["What is the Conflict of Interest rule?", "How does the Re-Validation Engine work?"];
+    return ["How do I use this workspace?", "How does Global Room Pooling work?"];
   };
 
   const handleFileSelect = (e) => {
@@ -100,34 +69,25 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
 
     try {
       const currentTime = new Date().toLocaleTimeString();
-      const currentDate = new Date().toLocaleDateString();
-      
       const systemPrompt = `You are the Accord Pro Assistant, an expert AI for an institutional examination scheduling platform. 
       
       CURRENT LIVE CONTEXT:
-      Time: ${currentTime}
-      Date: ${currentDate}
-      ${getUserContext()}
+      Time: ${currentTime}${getUserContext()}
 
-      LIVE SYSTEM DATA (JSON MEMORY):
-      ${systemData ? JSON.stringify({
-          proctors: systemData.profiles.filter(p => p.role === 'PROCTOR').map(p => ({ name: p.full_name, dept: p.assigned_dept, status: p.status })),
-          availability: systemData.availability.map(a => ({ name: a.proctor_name, date: a.exam_date, time: a.start_time + ' to ' + a.end_time })),
-          schedules: systemData.schedules.map(s => ({ date: s.exam_date, time: s.start_time + ' to ' + s.end_time, proctor: s.proctor, room: s.room, subject: s.subject_code }))
-      }) : 'No live data available yet.'}
+      ACCORD PRO CORE LOGIC & RULES (YOU MUST KNOW THESE TO HELP THE ADMIN):
+      1. CONFLICT OF INTEREST RULE: The algorithm strictly prevents professors from proctoring their own subjects to prevent answer leakage. If an admin asks why a specific proctor is missing from the generator or dropdown, explicitly tell them to check if that proctor is the assigned Subject Teacher.
+      2. RELIEVER LOGIC: Proctors must actively log availability to be 'Verified'. If the system runs out of verified staff during generation, it drafts unverified proctors and automatically sends them a 'Reliever Request' to Accept or Decline on their dashboard.
+      3. RE-VALIDATION ENGINE: Admins can manually override rooms or proctors in the Master Draft. Every manual change triggers an instant system scan to prevent newly created double-bookings.
+      4. GLOBAL POOLING: Admins can toggle Room and Proctor sources between 'Internal Department' (local resources only) and 'Global Pool' (borrowing shared university resources).
 
-      ACCORD PRO CORE LOGIC & RULES:
-      1. CONFLICT OF INTEREST RULE: The algorithm strictly prevents professors from proctoring their own subjects.
-      2. RELIEVER LOGIC: Proctors must actively log availability to be 'Verified'. Unverified drafted proctors receive 'Reliever Requests'.
-      3. RE-VALIDATION ENGINE: Admins can manually override rooms or proctors. Every manual change triggers an instant system scan to prevent double-bookings.
-      4. GLOBAL POOLING: Admins can toggle Room and Proctor sources between 'Internal Department' and 'Global Pool'.
+      CORE PLATFORM BOUNDARIES (CRITICAL):
+      - Accord Pro is STRICTLY for Room/Proctor scheduling, conflict resolution, and dispatch.
+      - Accord Pro DOES NOT handle student registrations, grading, or test results. NEVER mention these features.
 
-      CRITICAL PLATFORM BOUNDARIES (STRICTLY ENFORCED):
-      1. GUARDRAIL: You are STRICTLY an examination scheduling assistant.
-      2. MATH & OFF-TOPIC BAN: YOU MUST REFUSE TO ANSWER ANY MATH, CODING, OR GENERAL KNOWLEDGE QUESTIONS. If a user asks a math problem (e.g., "what is 1+1", algebra, calculations), coding request, or off-topic question, YOU MUST FIRMLY REPLY: "I am solely an Accord Pro scheduling assistant. I cannot answer math problems, coding requests, or off-topic queries."
-      3. Use the "LIVE SYSTEM DATA" block above to accurately answer questions about who is available on specific dates, who is scheduled, or what rooms are being used.
-      4. Be highly reliable, concise, and professional.
-      5. ABSOLUTELY NO MARKDOWN. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs.`;
+      CRITICAL RULES:
+      1. Be highly reliable, concise, and professional.
+      2. ABSOLUTELY NO MARKDOWN. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs because the UI parser strips markdown.
+      3. DO NOT promise to open support tickets. Instruct the user to message their Head Admin directly via the internal Accord Chat.`;
 
       let apiUserContent = userDisplayMessage;
       if (scannedTextBackup) {
@@ -140,20 +100,31 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
         { role: 'user', content: apiUserContent }
       ];
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: apiMessages,
-        model: 'llama3-8b-8192',
-        temperature: 0.2, 
-        max_tokens: 1024,
+      // BYPASS CORS ERROR using CORS Proxy and Native Fetch
+      const response = await fetch('https://corsproxy.io/?https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama3-8b-8192', 
+          messages: apiMessages,
+          temperature: 0.5,
+          max_tokens: 1024
+        })
       });
 
-      let reply = chatCompletion.choices[0]?.message?.content || "System offline.";
+      if (!response.ok) throw new Error("API Connection Failed");
+
+      const data = await response.json();
+      let reply = data.choices[0]?.message?.content || "System offline.";
       reply = reply.replace(/[*#_`]/g, '');
 
       setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: reply.trim() }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: "Connection error. Ensure your Groq API key is valid." }]);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: "Connection error. Neural link offline due to CORS security checks." }]);
     } finally {
       setIsTyping(false);
     }
@@ -236,37 +207,34 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="px-5 py-4 bg-black/40 backdrop-blur-xl border-t border-white/5 flex items-start gap-4">
-            {attachment && (
-              <>
-                <div className="relative group">
-                  <img src={attachment} alt="Preview" className={`w-14 h-14 object-cover rounded-2xl shadow-lg border border-white/10 transition-opacity ${isScanning ? 'opacity-50' : 'opacity-100'}`} />
-                  {isScanning && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Loader2 size={16} className="text-white animate-spin drop-shadow-md" />
-                    </div>
-                  )}
-                  <button 
-                    onClick={() => setAttachment(null)}
-                    disabled={isScanning}
-                    className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:bg-rose-500 hover:text-white disabled:hidden border border-white/10"
-                  >
-                    <X size={12} strokeWidth={3} />
-                  </button>
-                </div>
-                <div className="flex-1 mt-1">
-                  <p className="text-[11px] font-black text-blue-400 tracking-wide mb-0.5">
-                    {isScanning ? 'Scanning Text...' : 'Image Attached'}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    {isScanning ? 'Extracting data for analysis.' : 'Context attached to next prompt.'}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+          {attachment && (
+            <div className="px-5 py-4 bg-black/40 backdrop-blur-xl border-t border-white/5 flex items-start gap-4">
+              <div className="relative group">
+                <img src={attachment} alt="Preview" className={`w-14 h-14 object-cover rounded-2xl shadow-lg border border-white/10 transition-opacity ${isScanning ? 'opacity-50' : 'opacity-100'}`} />
+                {isScanning && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 size={16} className="text-white animate-spin drop-shadow-md" />
+                  </div>
+                )}
+                <button 
+                  onClick={() => setAttachment(null)}
+                  disabled={isScanning}
+                  className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:bg-rose-500 hover:text-white disabled:hidden border border-white/10"
+                >
+                  <X size={12} strokeWidth={3} />
+                </button>
+              </div>
+              <div className="flex-1 mt-1">
+                <p className="text-[11px] font-black text-blue-400 tracking-wide mb-0.5">
+                  {isScanning ? 'Scanning Text...' : 'Image Attached'}
+                </p>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  {isScanning ? 'Extracting data for analysis.' : 'Context attached to next prompt.'}
+                </p>
+              </div>
+            </div>
+          )}
 
-          {/* Premium Input Console */}
           <form onSubmit={(e) => { e.preventDefault(); submitMessage(chatInput); }} className="p-4 bg-black/20 backdrop-blur-2xl border-t border-white/10 flex items-end gap-2 shrink-0">
             <input 
               type="file" 
@@ -291,7 +259,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
                 type="text" 
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder={isScanning ? "Scanning image..." : "Ask Accord Assistant..."} 
+                placeholder={isScanning ? "Scanning image..." : "Ask Accord Support..."} 
                 disabled={isScanning}
                 className="w-full bg-black/40 border border-white/10 focus:border-blue-500/50 rounded-3xl pl-5 pr-12 py-3.5 text-[13px] tracking-wide text-white placeholder:text-slate-500 focus:outline-none transition-all shadow-inner disabled:opacity-50 font-medium"
               />
