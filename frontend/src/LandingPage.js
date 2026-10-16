@@ -5,14 +5,7 @@ import {
   HelpCircle, ArrowRight, ShieldCheck, CalendarCheck2, Users, X, Loader2, MessageCircle, Send, ChevronRight, Terminal, Image as ImageIcon, BookOpen
 } from 'lucide-react';
 import * as THREE from 'three';
-import Groq from 'groq-sdk';
 import accordLogo from './accord.png';
-
-// Initialize Groq directly in the browser
-const groq = new Groq({
-  apiKey: process.env.REACT_APP_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true 
-});
 
 // Cinematic Camera Glide
 function CameraController({ isEntering }) {
@@ -81,7 +74,6 @@ function BoardUI({ onEnter, onAbout, onChatToggle, isChatOpen, isEntering, onOpe
 
           <div className="flex flex-row items-center justify-center gap-6 sm:gap-10 md:gap-14 w-full pointer-events-auto">
             
-           {/* NEW: Student Portal Button */}
             <div className="relative group">
               <button
                 onClick={onOpenPortal}
@@ -282,14 +274,25 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         { role: 'user', content: apiUserContent }
       ];
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: apiMessages,
-        model: 'llama3-8b-8192', 
-        temperature: 0.5,
-        max_tokens: 1024,
+      // BYPASS CORS ERROR using CORS Proxy and Native Fetch
+      const response = await fetch('https://corsproxy.io/?https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama3-8b-8192', 
+          messages: apiMessages,
+          temperature: 0.5,
+          max_tokens: 1024
+        })
       });
 
-      let reply = chatCompletion.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
+      if (!response.ok) throw new Error("API Connection Failed");
+
+      const data = await response.json();
+      let reply = data.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
       
       if (reply.includes('[ACTION: LAUNCH_TERMINAL]')) {
@@ -307,7 +310,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       const errorMsg = { 
         id: Date.now() + 1, 
         sender: 'bot', 
-        text: "System connection error. My neural link is temporarily offline." 
+        text: "System connection error. My neural link is temporarily offline due to CORS security checks." 
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -390,7 +393,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       {isChatOpen && (
         <div className="absolute top-[10%] md:top-auto md:bottom-24 right-4 md:right-10 w-[calc(100vw-2rem)] md:w-[400px] h-[80vh] md:h-[36rem] bg-slate-900/70 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_0_60px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden z-30 animate-in slide-in-from-bottom-10 fade-in duration-500 pointer-events-auto font-sans antialiased">
           
-          {/* iOS-Style Glass Header */}
           <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 px-6 py-5 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 border border-blue-400/20">
@@ -408,7 +410,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
             </button>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-black/20">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
@@ -458,7 +459,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Attachment Preview Pillar */}
           {attachment && (
             <div className="px-5 py-4 bg-black/40 backdrop-blur-xl border-t border-white/5 flex items-start gap-4">
               <div className="relative group">
@@ -487,7 +487,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
             </div>
           )}
 
-          {/* Premium Input Console */}
           <form onSubmit={handleSendMessage} className="p-4 bg-black/20 backdrop-blur-2xl border-t border-white/10 flex items-end gap-2 shrink-0">
             <input 
               type="file" 
