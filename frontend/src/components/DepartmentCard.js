@@ -1204,7 +1204,43 @@ const handleProctorSwitch = (newProctorName, scope = 'session') => {
           deptLogoData = null;
         }
 
-        let isFirstPage = true;
+        // 1. UPGRADED UNIVERSAL LETTERHEAD
+        const drawLetterhead = (data) => {
+          if (!doc.headerPrintedPages) doc.headerPrintedPages = new Set();
+          if (doc.headerPrintedPages.has(data.pageNumber)) return;
+          doc.headerPrintedPages.add(data.pageNumber);
+          
+          const pageWidth = doc.internal.pageSize.getWidth();
+
+          if (uniLogoData) doc.addImage(uniLogoData, 'PNG', 14, 12, 18, 18);
+          if (deptLogoData) doc.addImage(deptLogoData, 'PNG', pageWidth - 32, 12, 18, 18);
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(16);
+          doc.setTextColor(15, 23, 42); 
+          doc.text((dept.university || "UNIVERSITY").toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+          
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(100, 116, 139); 
+          doc.text(`${deptName.toUpperCase()} (${deptCode}) • ${(dept.campus_location || 'MAIN').toUpperCase()} CAMPUS`, pageWidth / 2, 23, { align: 'center' });
+
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(8);
+          doc.setTextColor(37, 99, 235); 
+          doc.text(`OFFICIAL SECTION ITINERARY`, pageWidth / 2, 27, { align: 'center' });
+
+          doc.setDrawColor(15, 23, 42); 
+          doc.setLineWidth(0.6);
+          doc.line(14, 32, pageWidth - 14, 32);
+          
+          doc.setDrawColor(226, 232, 240); 
+          doc.setLineWidth(0.2);
+          doc.line(14, 33, pageWidth - 14, 33);
+        };
+
+        let currentY = 40;
+        let isFirstSection = true;
 
         const groupedData = {};
         sorted.forEach(item => {
@@ -1218,56 +1254,7 @@ const handleProctorSwitch = (newProctorName, scope = 'session') => {
         Object.keys(groupedData).sort().forEach(date => {
           Object.keys(groupedData[date]).sort().forEach(section => {
             
-            if (!isFirstPage) doc.addPage();
-            isFirstPage = false;
-            
-            const pageWidth = doc.internal.pageSize.getWidth();
-            
-            if (uniLogoData) doc.addImage(uniLogoData, 'PNG', 14, 12, 18, 18);
-            if (deptLogoData) doc.addImage(deptLogoData, 'PNG', pageWidth - 32, 12, 18, 18);
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.setTextColor(15, 23, 42); 
-            doc.text((dept.university || "UNIVERSITY").toUpperCase(), pageWidth / 2, 18, { align: 'center' });
-            
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139); 
-            doc.text(`${deptName.toUpperCase()} (${deptCode}) • ${(dept.campus_location || 'MAIN').toUpperCase()} CAMPUS`, pageWidth / 2, 23, { align: 'center' });
-
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(8);
-            doc.setTextColor(37, 99, 235); 
-            doc.text(`OFFICIAL SECTION ITINERARY`, pageWidth / 2, 27, { align: 'center' });
-
-            doc.setDrawColor(15, 23, 42); 
-            doc.setLineWidth(0.6);
-            doc.line(14, 32, pageWidth - 14, 32);
-            
-            doc.setDrawColor(226, 232, 240); 
-            doc.setLineWidth(0.2);
-            doc.line(14, 33, pageWidth - 14, 33);
-
-            let currentY = 42;
-            
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.setTextColor(15, 23, 42);
-            doc.text(`EXAM DATE:`, 14, currentY);
-            
-            doc.setFont("helvetica", "normal");
-            doc.text(date.toUpperCase(), 38, currentY);
-            currentY += 6;
-            
-            doc.setFont("helvetica", "bold");
-            doc.text(`SECTION:`, 14, currentY);
-            
-            doc.setFont("helvetica", "normal");
             const sampleItem = groupedData[date][section][0];
-            doc.text(`YR ${sampleItem.year_level || ''} - SEC ${section.toUpperCase()}`, 34, currentY);
-            currentY += 8;
-
             const items = groupedData[date][section];
             const tableRows = items.map(item => [
               `${formatTime(item.start_time)}\n${formatTime(item.end_time)}`, 
@@ -1278,9 +1265,14 @@ const handleProctorSwitch = (newProctorName, scope = 'session') => {
             ]);
 
             autoTable(doc, { 
-              head: [["TIME", "CODE", "SUBJECT", "ROOM", "PROCTOR"]],
+              head: [
+                [
+                  { content: `DATE: ${date.toUpperCase()}  |  SECTION: YR ${sampleItem.year_level || ''} - SEC ${section.toUpperCase()}`, colSpan: 5, styles: { halign: 'center', fillColor: [37, 99, 235], fontStyle: 'bold', fontSize: 10 } }
+                ],
+                ["TIME", "CODE", "SUBJECT", "ROOM", "PROCTOR"]
+              ],
               body: tableRows, 
-              startY: currentY, 
+              startY: isFirstSection ? 40 : currentY, 
               theme: 'grid', 
               styles: { font: 'helvetica', fontSize: 9, cellPadding: 5, textColor: [51, 65, 85], lineColor: [226, 232, 240], lineWidth: 0.1, valign: 'middle' }, 
               headStyles: { font: 'helvetica', fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', halign: 'center', lineColor: [15, 23, 42], lineWidth: 0.1 },
@@ -1292,9 +1284,12 @@ const handleProctorSwitch = (newProctorName, scope = 'session') => {
                 4: { halign: 'center', cellWidth: 38 }
               },
               alternateRowStyles: { fillColor: [248, 250, 252] },
-              margin: { bottom: 25, left: 14, right: 14 },
-              didDrawPage: () => {
+              margin: { top: 40, bottom: 25, left: 14, right: 14 },
+              pageBreak: 'auto',
+              didDrawPage: (data) => {
+                drawLetterhead(data);
                 const printDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const pageWidth = doc.internal.pageSize.getWidth();
                 doc.setFont("helvetica", "italic");
                 doc.setFontSize(7);
                 doc.setTextColor(148, 163, 184); 
@@ -1305,6 +1300,8 @@ const handleProctorSwitch = (newProctorName, scope = 'session') => {
                 doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
               }
             });
+            currentY = doc.lastAutoTable.finalY + 10;
+            isFirstSection = false;
           });
         });
 
