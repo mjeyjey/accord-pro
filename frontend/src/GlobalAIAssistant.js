@@ -108,7 +108,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
 
       const chatCompletion = await groq.chat.completions.create({
         messages: apiMessages,
-        model: 'llama3-8b-8192', 
+        model: 'openai/gpt-oss-20b', 
         temperature: 0.5,
         max_tokens: 1024,
       });
