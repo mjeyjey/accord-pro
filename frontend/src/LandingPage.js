@@ -5,14 +5,7 @@ import {
   HelpCircle, ArrowRight, ShieldCheck, CalendarCheck2, Users, X, Loader2, MessageCircle, Send, ChevronRight, Terminal, Image as ImageIcon, BookOpen
 } from 'lucide-react';
 import * as THREE from 'three';
-import Groq from 'groq-sdk';
 import accordLogo from './accord.png';
-
-// Initialize Groq directly in the browser
-const groq = new Groq({
-  apiKey: process.env.REACT_APP_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true 
-});
 
 // Cinematic Camera Glide
 function CameraController({ isEntering }) {
@@ -180,7 +173,7 @@ function ClassroomModel() {
   return <primitive object={scene} scale={7.5} rotation={[0, -Math.PI / 2, 0]} position={[0, -1.5, 0]} />;
 }
 
-  export default function LandingPage({ onAuthenticate, onOpenPortal }) {
+export default function LandingPage({ onAuthenticate, onOpenPortal }) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   
@@ -223,8 +216,6 @@ function ClassroomModel() {
         setExtractedText('');
         
         try {
-          // THE MAGIC TRICK: This downloads Tesseract instantly in the background 
-          // ONLY when a user uploads a file!
           const Tesseract = (await import('tesseract.js')).default;
           const { data: { text } } = await Tesseract.recognize(reader.result, 'eng');
           setExtractedText(text);
@@ -284,14 +275,17 @@ function ClassroomModel() {
         { role: 'user', content: apiUserContent }
       ];
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: apiMessages,
-        model: 'openai/gpt-oss-20b', 
-        temperature: 0.5,
-        max_tokens: 1024,
+      // BYPASS BROWSER CORS: Send to your Express backend
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages })
       });
 
-      let reply = chatCompletion.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
+      if (!response.ok) throw new Error("Backend connection failed.");
+      const data = await response.json();
+
+      let reply = data.reply || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
       
       if (reply.includes('[ACTION: LAUNCH_TERMINAL]')) {
@@ -305,7 +299,7 @@ function ClassroomModel() {
       setMessages((prev) => [...prev, botMsg]);
 
     } catch (error) {
-      console.error('Groq API Error:', error);
+      console.error('API Error:', error);
       const errorMsg = { 
         id: Date.now() + 1, 
         sender: 'bot', 
