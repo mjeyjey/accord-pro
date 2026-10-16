@@ -3,7 +3,6 @@ import { MessageCircle, X, ShieldCheck, Send, Image as ImageIcon, ChevronRight, 
 import Groq from 'groq-sdk';
 import Tesseract from 'tesseract.js';
 import accordLogo from './accord.png';
-import { supabase } from './supabaseClient'; // Added Supabase to fetch live context
 
 const groq = new Groq({
   apiKey: process.env.REACT_APP_GROQ_API_KEY,
@@ -16,51 +15,26 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
   const [extractedText, setExtractedText] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [systemData, setSystemData] = useState(null); // Holds live DB knowledge
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'bot', text: 'System Online. I am the Accord Pro Assistant. How can I help you navigate the platform or check schedules today?' }
+    { id: 1, sender: 'bot', text: 'System Online. I am the Accord Pro Assistant. How can I help you navigate the platform today?' }
   ]);
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // --- NEW: FETCH LIVE SYSTEM DATA WHEN AI OPENS ---
-  useEffect(() => {
-    if (isOpen && session && profile?.university) {
-      const fetchLiveContext = async () => {
-        try {
-          const [prof, avail, sched] = await Promise.all([
-            supabase.from('profiles').select('full_name, role, assigned_dept, status').eq('university', profile.university),
-            supabase.from('proctor_availability').select('proctor_name, exam_date, start_time, end_time').eq('university', profile.university),
-            supabase.from('schedules').select('exam_date, start_time, end_time, proctor, room, subject_code, dept_code, flagged').eq('university', profile.university)
-          ]);
-          
-          setSystemData({
-            profiles: prof.data || [],
-            availability: avail.data || [],
-            schedules: sched.data || []
-          });
-        } catch (err) {
-          console.error("Failed to sync AI context:", err);
-        }
-      };
-      fetchLiveContext();
-    }
-  }, [isOpen, session, profile]);
-
   const getUserContext = () => {
     if (!session) return `User is currently on the authentication screen. Auth Mode: ${authMode}. They may need help logging in, resetting a password, or finding an invite code.`;
     if (profile?.status === 'BLOCKED') return `User's account is currently BLOCKED by an admin.`;
     if (profile?.status === 'PENDING') return `User's account is PENDING. They are waiting for a Head Admin to approve their access.`;
-    return `User is logged in as ${profile?.role} in the${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
+    return `User is logged in as ${profile?.role} in the${profile?.assigned_dept || 'Global'} department. They are currently actively working inside the '${activeTab}' tab.`;
   };
 
   const getDynamicQuestions = () => {
     if (!session) return ["Where do I get an invite code?", "Why is my account pending?"];
-    if (activeTab === 'users') return ["Who are the available proctors?", "How do I edit staff roles?"];
-    if (activeTab === 'dashboard') return ["Who is available to proctor today?", "How does Reliever Logic work?"];
-    if (activeTab === 'generate' || activeTab === 'preview') return ["What is the Conflict of Interest rule?", "Are there any double-bookings?"];
-    return ["Who is available today?", "How does Global Room Pooling work?"];
+    if (activeTab === 'users') return ["How do I approve a pending user?", "How do I edit staff roles?"];
+    if (activeTab === 'dashboard') return ["How does Reliever Logic work?", "How do I resolve a double-booking?"];
+    if (activeTab === 'generate' || activeTab === 'preview') return ["What is the Conflict of Interest rule?", "How does the Re-Validation Engine work?"];
+    return ["How do I use this workspace?", "How does Global Room Pooling work?"];
   };
 
   const handleFileSelect = (e) => {
@@ -101,34 +75,25 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
 
     try {
       const currentTime = new Date().toLocaleTimeString();
-      const currentDate = new Date().toLocaleDateString();
-      
-      // --- UPGRADED SYSTEM PROMPT WITH GUARDRAILS AND LIVE DATA ---
       const systemPrompt = `You are the Accord Pro Assistant, an expert AI for an institutional examination scheduling platform. 
       
       CURRENT LIVE CONTEXT:
-      Time: ${currentTime}
-      Date: ${currentDate}${getUserContext()}
+      Time: ${currentTime}${getUserContext()}
 
-      LIVE SYSTEM DATA (JSON MEMORY):
-      ${systemData ? JSON.stringify({
-          proctors: systemData.profiles.filter(p => p.role === 'PROCTOR').map(p => ({ name: p.full_name, dept: p.assigned_dept, status: p.status })),
-          availability: systemData.availability.map(a => ({ name: a.proctor_name, date: a.exam_date, time: a.start_time + ' to ' + a.end_time })),
-          schedules: systemData.schedules.map(s => ({ date: s.exam_date, time: s.start_time + ' to ' + s.end_time, proctor: s.proctor, room: s.room, subject: s.subject_code }))
-      }) : 'No live data available yet.'}
+      ACCORD PRO CORE LOGIC & RULES (YOU MUST KNOW THESE TO HELP THE ADMIN):
+      1. CONFLICT OF INTEREST RULE: The algorithm strictly prevents professors from proctoring their own subjects to prevent answer leakage. If an admin asks why a specific proctor is missing from the generator or dropdown, explicitly tell them to check if that proctor is the assigned Subject Teacher.
+      2. RELIEVER LOGIC: Proctors must actively log availability to be 'Verified'. If the system runs out of verified staff during generation, it drafts unverified proctors and automatically sends them a 'Reliever Request' to Accept or Decline on their dashboard.
+      3. RE-VALIDATION ENGINE: Admins can manually override rooms or proctors in the Master Draft. Every manual change triggers an instant system scan to prevent newly created double-bookings.
+      4. GLOBAL POOLING: Admins can toggle Room and Proctor sources between 'Internal Department' (local resources only) and 'Global Pool' (borrowing shared university resources).
 
-      ACCORD PRO CORE LOGIC & RULES:
-      1. CONFLICT OF INTEREST RULE: The algorithm strictly prevents professors from proctoring their own subjects.
-      2. RELIEVER LOGIC: Proctors must actively log availability to be 'Verified'. Unverified drafted proctors receive 'Reliever Requests'.
-      3. RE-VALIDATION ENGINE: Admins can manually override rooms or proctors. Every manual change triggers an instant system scan to prevent double-bookings.
-      4. GLOBAL POOLING: Admins can toggle Room and Proctor sources between 'Internal Department' and 'Global Pool'.
+      CORE PLATFORM BOUNDARIES (CRITICAL):
+      - Accord Pro is STRICTLY for Room/Proctor scheduling, conflict resolution, and dispatch.
+      - Accord Pro DOES NOT handle student registrations, grading, or test results. NEVER mention these features.
 
-      CRITICAL PLATFORM BOUNDARIES (STRICTLY ENFORCED):
-      1. GUARDRAIL: You are STRICTLY an examination scheduling assistant.
-      2. MATH & OFF-TOPIC BAN: YOU MUST REFUSE TO ANSWER ANY MATH, CODING, OR GENERAL KNOWLEDGE QUESTIONS. If a user asks a math problem (e.g., "what is 1+1", algebra, calculations), coding request, or off-topic question, YOU MUST FIRMLY REPLY: "I am solely an Accord Pro scheduling assistant. I cannot answer math problems, coding requests, or off-topic queries."
-      3. Use the "LIVE SYSTEM DATA" block above to accurately answer questions about who is available on specific dates, who is scheduled, or what rooms are being used.
-      4. Be highly reliable, concise, and professional.
-      5. ABSOLUTELY NO MARKDOWN. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs.`;
+      CRITICAL RULES:
+      1. Be highly reliable, concise, and professional.
+      2. ABSOLUTELY NO MARKDOWN. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs because the UI parser strips markdown.
+      3. DO NOT promise to open support tickets. Instruct the user to message their Head Admin directly via the internal Accord Chat.`;
 
       let apiUserContent = userDisplayMessage;
       if (scannedTextBackup) {
@@ -144,7 +109,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
       const chatCompletion = await groq.chat.completions.create({
         messages: apiMessages,
         model: 'openai/gpt-oss-20b', 
-        temperature: 0.2, // Lower temperature makes the AI strictly follow the Math Ban rules
+        temperature: 0.5,
         max_tokens: 1024,
       });
 
