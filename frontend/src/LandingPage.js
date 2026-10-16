@@ -176,7 +176,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
   
-  // Smart Chat States
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [attachment, setAttachment] = useState(null);
@@ -247,7 +246,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       const systemPrompt = `You are the Accord Pro Assistant, a highly intelligent, reliable, and functional AI for an institutional examination operations platform. 
       Tone: Professional, helpful, concise. 
       Current System Time: ${currentTime}
-      User Device/Platform: ${navigator.platform || 'Unknown Web Client'}
       
       CORE PLATFORM BOUNDARIES (CRITICAL):
       - Accord Pro is STRICTLY for Room/Proctor scheduling, conflict resolution, and dispatch.
@@ -257,6 +255,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       1. ABSOLUTELY NO MARKDOWN FORMATTING. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs.
       2. If the user explicitly asks to log in, launch the app, enter the terminal, or start the platform, you MUST include the exact phrase "[ACTION: LAUNCH_TERMINAL]" in your response.
       3. DO NOT promise to open support tickets. Instruct the user to message their Head Admin directly.
+      4. MATH & OFF-TOPIC BAN: YOU MUST REFUSE TO ANSWER ANY MATH, CODING, OR GENERAL KNOWLEDGE QUESTIONS. If a user asks a math problem, YOU MUST FIRMLY REPLY: "I am solely an Accord Pro scheduling assistant. I cannot answer math problems, coding requests, or off-topic queries."
       
       Core Knowledge Base:
       - Accord Pro: Streamlines university-wide exam management, eliminating scheduling friction by resolving room/proctor conflicts in real time.
@@ -274,25 +273,17 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         { role: 'user', content: apiUserContent }
       ];
 
-      // BYPASS CORS ERROR using CORS Proxy and Native Fetch
-      const response = await fetch('https://corsproxy.io/?https://api.groq.com/openai/v1/chat/completions', {
+      // THE FIX: Call your new secure Vercel API
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama3-8b-8192', 
-          messages: apiMessages,
-          temperature: 0.5,
-          max_tokens: 1024
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages })
       });
 
-      if (!response.ok) throw new Error("API Connection Failed");
-
+      if (!response.ok) throw new Error("Backend connection failed.");
       const data = await response.json();
-      let reply = data.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
+
+      let reply = data.reply || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
       
       if (reply.includes('[ACTION: LAUNCH_TERMINAL]')) {
@@ -459,33 +450,35 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
             <div ref={messagesEndRef} />
           </div>
 
-          {attachment && (
-            <div className="px-5 py-4 bg-black/40 backdrop-blur-xl border-t border-white/5 flex items-start gap-4">
-              <div className="relative group">
-                <img src={attachment} alt="Preview" className={`w-14 h-14 object-cover rounded-2xl shadow-lg border border-white/10 transition-opacity ${isScanning ? 'opacity-50' : 'opacity-100'}`} />
-                {isScanning && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 size={16} className="text-white animate-spin drop-shadow-md" />
-                  </div>
-                )}
-                <button 
-                  onClick={() => setAttachment(null)}
-                  disabled={isScanning}
-                  className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:bg-rose-500 hover:text-white disabled:hidden border border-white/10"
-                >
-                  <X size={12} strokeWidth={3} />
-                </button>
-              </div>
-              <div className="flex-1 mt-1">
-                <p className="text-[11px] font-black text-blue-400 tracking-wide mb-0.5">
-                  {isScanning ? 'Scanning Text...' : 'Image Attached'}
-                </p>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  {isScanning ? 'Extracting data for analysis.' : 'Context attached to next prompt.'}
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="px-5 py-4 bg-black/40 backdrop-blur-xl border-t border-white/5 flex items-start gap-4">
+            {attachment && (
+              <>
+                <div className="relative group">
+                  <img src={attachment} alt="Preview" className={`w-14 h-14 object-cover rounded-2xl shadow-lg border border-white/10 transition-opacity ${isScanning ? 'opacity-50' : 'opacity-100'}`} />
+                  {isScanning && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 size={16} className="text-white animate-spin drop-shadow-md" />
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => setAttachment(null)}
+                    disabled={isScanning}
+                    className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:bg-rose-500 hover:text-white disabled:hidden border border-white/10"
+                  >
+                    <X size={12} strokeWidth={3} />
+                  </button>
+                </div>
+                <div className="flex-1 mt-1">
+                  <p className="text-[11px] font-black text-blue-400 tracking-wide mb-0.5">
+                    {isScanning ? 'Scanning Text...' : 'Image Attached'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    {isScanning ? 'Extracting data for analysis.' : 'Context attached to next prompt.'}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
 
           <form onSubmit={handleSendMessage} className="p-4 bg-black/20 backdrop-blur-2xl border-t border-white/10 flex items-end gap-2 shrink-0">
             <input 
@@ -528,7 +521,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* Bouncing Interaction Indicator */}
       {!isEntering && !isAboutOpen && !isChatOpen && (
         <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-2 md:gap-3 opacity-60 transition-opacity duration-1000">
           <div className="w-6 h-10 md:w-8 md:h-12 border-2 border-white/20 rounded-full flex justify-center p-1.5 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
@@ -538,7 +530,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* "WHAT IS ACCORD PRO?" MODAL */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
           <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
