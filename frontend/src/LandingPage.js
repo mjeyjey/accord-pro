@@ -286,7 +286,7 @@ function ClassroomModel() {
 
       const chatCompletion = await groq.chat.completions.create({
         messages: apiMessages,
-        model: 'openai/gpt-oss-20b', 
+        model: 'llama3-8b-8192', 
         temperature: 0.5,
         max_tokens: 1024,
       });
