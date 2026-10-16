@@ -5,7 +5,14 @@ import {
   HelpCircle, ArrowRight, ShieldCheck, CalendarCheck2, Users, X, Loader2, MessageCircle, Send, ChevronRight, Terminal, Image as ImageIcon, BookOpen
 } from 'lucide-react';
 import * as THREE from 'three';
+import Groq from 'groq-sdk';
 import accordLogo from './accord.png';
+
+// Initialize Groq directly in the browser
+const groq = new Groq({
+  apiKey: process.env.REACT_APP_GROQ_API_KEY,
+  dangerouslyAllowBrowser: true 
+});
 
 // Cinematic Camera Glide
 function CameraController({ isEntering }) {
@@ -275,17 +282,14 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         { role: 'user', content: apiUserContent }
       ];
 
-      // BYPASS BROWSER CORS: Send to your Express backend
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages })
+      const chatCompletion = await groq.chat.completions.create({
+        messages: apiMessages,
+        model: 'llama3-8b-8192', 
+        temperature: 0.5,
+        max_tokens: 1024,
       });
 
-      if (!response.ok) throw new Error("Backend connection failed.");
-      const data = await response.json();
-
-      let reply = data.reply || "I am currently rebooting. Please try again in a moment.";
+      let reply = chatCompletion.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
       
       if (reply.includes('[ACTION: LAUNCH_TERMINAL]')) {
