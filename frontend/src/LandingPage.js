@@ -5,13 +5,7 @@ import {
   HelpCircle, ArrowRight, ShieldCheck, CalendarCheck2, Users, X, Loader2, MessageCircle, Send, ChevronRight, Terminal, Image as ImageIcon, BookOpen
 } from 'lucide-react';
 import * as THREE from 'three';
-import Groq from 'groq-sdk';
 import accordLogo from './accord.png';
-
-const groq = new Groq({
-  apiKey: process.env.REACT_APP_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true 
-});
 
 function CameraController({ isEntering }) {
   useFrame((state, delta) => {
@@ -259,7 +253,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       1. ABSOLUTELY NO MARKDOWN FORMATTING. Do NOT use asterisks (*), hash symbols (#), or bullet points. Respond in pure, clean, plain text paragraphs.
       2. If the user explicitly asks to log in, launch the app, enter the terminal, or start the platform, you MUST include the exact phrase "[ACTION: LAUNCH_TERMINAL]" in your response.
       3. DO NOT promise to open support tickets. Instruct the user to message their Head Admin directly.
-      4. MATH & OFF-TOPIC BAN: YOU MUST REFUSE TO ANSWER ANY MATH, CODING, OR GENERAL KNOWLEDGE QUESTIONS. If a user asks a math problem, YOU MUST FIRMLY REPLY: "I am solely an Accord Pro scheduling assistant. I cannot answer math problems, coding requests, or off-topic queries."
       
       Core Knowledge Base:
       - Accord Pro: Streamlines university-wide exam management, eliminating scheduling friction by resolving room/proctor conflicts in real time.
@@ -273,19 +266,24 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
 
       const apiMessages = [
         { role: 'system', content: systemPrompt },
-        // Ignore the first dummy greeting so the model doesn't crash from Sequence Validation
         ...messages.filter(m => m.id !== 1).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
         { role: 'user', content: apiUserContent }
       ];
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: apiMessages,
-        model: 'openai/gpt-oss-20b', 
-        temperature: 0.2, // Strict temperature for Math Ban
-        max_tokens: 1024,
+      // ROUTE TO VERCEL BACKEND INSTEAD OF GROQ DIRECTLY
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages })
       });
 
-      let reply = chatCompletion.choices[0]?.message?.content || "I am currently rebooting. Please try again in a moment.";
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Backend connection failed.");
+      }
+
+      let reply = data.reply || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
       
       if (reply.includes('[ACTION: LAUNCH_TERMINAL]')) {
@@ -299,11 +297,11 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       setMessages((prev) => [...prev, botMsg]);
 
     } catch (error) {
-      console.error('Groq SDK Error:', error);
+      console.error('API Error:', error);
       const errorMsg = { 
         id: Date.now() + 1, 
         sender: 'bot', 
-        text: "System connection error. Please verify your Groq API Key is properly loaded." 
+        text: `Error: ${error.message}` 
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -523,7 +521,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* Bouncing Interaction Indicator */}
       {!isEntering && !isAboutOpen && !isChatOpen && (
         <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-2 md:gap-3 opacity-60 transition-opacity duration-1000">
           <div className="w-6 h-10 md:w-8 md:h-12 border-2 border-white/20 rounded-full flex justify-center p-1.5 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
@@ -533,7 +530,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* "WHAT IS ACCORD PRO?" MODAL */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
           <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
