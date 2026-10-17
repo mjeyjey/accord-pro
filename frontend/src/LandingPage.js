@@ -7,7 +7,6 @@ import {
 import * as THREE from 'three';
 import accordLogo from './accord.png';
 
-// Cinematic Camera Glide
 function CameraController({ isEntering }) {
   useFrame((state, delta) => {
     if (isEntering) {
@@ -18,7 +17,6 @@ function CameraController({ isEntering }) {
   return null;
 }
 
-// Feature-Based Interactive Tooltips
 function SpatialTooltip({ position, title, description, icon: Icon, delay = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -52,7 +50,6 @@ function SpatialTooltip({ position, title, description, icon: Icon, delay = 0 })
   );
 }
 
-// Immersive UI
 function BoardUI({ onEnter, onAbout, onChatToggle, isChatOpen, isEntering, onOpenPortal }) {
   return (
     <Float speed={1.2} rotationIntensity={0.02} floatIntensity={0.05} floatingRange={[-0.01, 0.01]}>
@@ -246,6 +243,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       const systemPrompt = `You are the Accord Pro Assistant, a highly intelligent, reliable, and functional AI for an institutional examination operations platform. 
       Tone: Professional, helpful, concise. 
       Current System Time: ${currentTime}
+      User Device/Platform: ${navigator.platform || 'Unknown Web Client'}
       
       CORE PLATFORM BOUNDARIES (CRITICAL):
       - Accord Pro is STRICTLY for Room/Proctor scheduling, conflict resolution, and dispatch.
@@ -273,7 +271,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         { role: 'user', content: apiUserContent }
       ];
 
-      // THE FIX: Call your new secure Vercel API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -301,7 +298,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       const errorMsg = { 
         id: Date.now() + 1, 
         sender: 'bot', 
-        text: "System connection error. My neural link is temporarily offline due to CORS security checks." 
+        text: "System connection error. My neural link is temporarily offline." 
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -521,6 +518,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
+      {/* Bouncing Interaction Indicator */}
       {!isEntering && !isAboutOpen && !isChatOpen && (
         <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-2 md:gap-3 opacity-60 transition-opacity duration-1000">
           <div className="w-6 h-10 md:w-8 md:h-12 border-2 border-white/20 rounded-full flex justify-center p-1.5 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
@@ -530,6 +528,7 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
+      {/* "WHAT IS ACCORD PRO?" MODAL */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
           <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
