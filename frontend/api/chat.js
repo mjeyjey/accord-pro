@@ -1,20 +1,20 @@
 export default async function handler(req, res) {
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    // Automatically grabs the key you saved in Vercel's Environment Variables
-    const apiKey = process.env.REACT_APP_GROQ_API_KEY || process.env.GROQ_API_KEY;
+    // Make sure your Vercel Environment Variable is named exactly GROQ_API_KEY
+    const apiKey = process.env.GROQ_API_KEY || process.env.REACT_APP_GROQ_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({ error: 'API key is missing in Vercel Environment Variables.' });
     }
 
-    // Safely parse body data coming from your React frontend
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
-    // Securely bypasses the browser by making the request from Vercel's server
+    // Securely bypasses the browser by making the request from Vercel's backend
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -22,18 +22,17 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b', // The exact model you confirmed works
+        model: 'openai/gpt-oss-20b', // Your preferred working model
         messages: body.messages,
-        temperature: 0.2, // Strict temperature to enforce the Math Ban
+        temperature: 0.5,
         max_tokens: 1024
       })
     });
 
     const data = await response.json();
 
-    // If Groq rejects it, pass the exact error message back to the chat box
     if (!response.ok) {
-      return res.status(400).json({ error: `Groq Error: ${data.error?.message || 'Unknown API Rejection'}` });
+      return res.status(400).json({ error: data.error?.message || 'Groq API rejected the request.' });
     }
 
     res.status(200).json({ reply: data.choices[0]?.message?.content });
