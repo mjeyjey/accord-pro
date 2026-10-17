@@ -267,18 +267,22 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
 
       const apiMessages = [
         { role: 'system', content: systemPrompt },
-        ...messages.map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
+        // THE FIX: Ignore the first dummy greeting so Llama 3 doesn't crash from Sequence Validation
+        ...messages.filter(m => m.id !== 1).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
         { role: 'user', content: apiUserContent }
       ];
 
+      // THE FIX: Call the Vercel Function
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages })
       });
 
-      if (!response.ok) throw new Error("Backend connection failed.");
       const data = await response.json();
+
+      // THE FIX: If Vercel/Groq throws an error, it gets caught right here!
+      if (!response.ok) throw new Error(data.error || "Backend connection failed.");
 
       let reply = data.reply || "I am currently rebooting. Please try again in a moment.";
       reply = reply.replace(/[*#_`]/g, ''); 
@@ -298,7 +302,8 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
       const errorMsg = { 
         id: Date.now() + 1, 
         sender: 'bot', 
-        text: "System connection error. My neural link is temporarily offline." 
+        // Prints the exact error reason from the backend
+        text: `Error: ${error.message}` 
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -518,7 +523,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* Bouncing Interaction Indicator */}
       {!isEntering && !isAboutOpen && !isChatOpen && (
         <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-2 md:gap-3 opacity-60 transition-opacity duration-1000">
           <div className="w-6 h-10 md:w-8 md:h-12 border-2 border-white/20 rounded-full flex justify-center p-1.5 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
@@ -528,7 +532,6 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
         </div>
       )}
 
-      {/* "WHAT IS ACCORD PRO?" MODAL */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
           <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
@@ -555,5 +558,3 @@ export default function LandingPage({ onAuthenticate, onOpenPortal }) {
     </div>
   );
 }
-
-useGLTF.preload(process.env.PUBLIC_URL + '/classroom22.glb');
