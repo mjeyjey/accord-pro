@@ -45,7 +45,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
     if (!session) return `User is currently on the authentication screen. Auth Mode: ${authMode}. They may need help logging in, resetting a password, or finding an invite code.`;
     if (profile?.status === 'BLOCKED') return `User's account is currently BLOCKED by an admin.`;
     if (profile?.status === 'PENDING') return `User's account is PENDING. They are waiting for a Head Admin to approve their access.`;
-    return `User is logged in as ${profile?.role} in the ${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
+    return `User is logged in as ${profile?.role} in the${profile?.assigned_dept || 'Global'} department. They are currently working inside the '${activeTab}' tab.`;
   };
 
   const getDynamicQuestions = () => {
@@ -100,8 +100,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
       
       CURRENT LIVE CONTEXT:
       Time: ${currentTime}
-      Date: ${currentDate}
-      ${getUserContext()}
+      Date: ${currentDate}${getUserContext()}
 
       LIVE SYSTEM DATA (JSON MEMORY):
       ${systemData ? JSON.stringify({
@@ -130,18 +129,22 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
 
       const apiMessages = [
         { role: 'system', content: systemPrompt },
-        ...messages.map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
+        // THE FIX: Ignore the first dummy greeting so Llama 3 doesn't crash from Sequence Validation
+        ...messages.filter(m => m.id !== 1).map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
         { role: 'user', content: apiUserContent }
       ];
 
+      // THE FIX: Call the Vercel Function
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages })
       });
 
-      if (!response.ok) throw new Error("Backend connection failed.");
       const data = await response.json();
+
+      // THE FIX: If Vercel/Groq throws an error, it gets caught right here!
+      if (!response.ok) throw new Error(data.error || "Backend connection failed.");
 
       let reply = data.reply || "System offline.";
       reply = reply.replace(/[*#_`]/g, '');
@@ -149,7 +152,7 @@ export default function GlobalAIAssistant({ session, profile, authMode, activeTa
       setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: reply.trim() }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: "Connection error. Please check your network or Vercel logs." }]);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: `Error: ${error.message}` }]);
     } finally {
       setIsTyping(false);
     }
