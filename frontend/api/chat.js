@@ -4,12 +4,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Automatically grabs the key you saved in Vercel's Environment Variables
     const apiKey = process.env.REACT_APP_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key is missing.' });
+      return res.status(400).json({ error: 'API key is missing in Vercel Environment Variables.' });
     }
+
+    // Safely parse body data
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -19,20 +21,22 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'llama3-8b-8192',
-        messages: req.body.messages,
-        temperature: 0.2,
+        messages: body.messages,
+        temperature: 0.2, // Strict temperature for Math Ban
         max_tokens: 1024
       })
     });
 
+    const data = await response.json();
+
+    // IF GROQ FAILS, RETURN THE EXACT ERROR MESSAGE
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'Groq API rejected the request.' });
+      return res.status(400).json({ error: `Groq Error: ${data.error?.message || 'Unknown API Rejection'}` });
     }
 
-    const data = await response.json();
     res.status(200).json({ reply: data.choices[0]?.message?.content });
 
   } catch (error) {
-    res.status(500).json({ error: 'Vercel function crashed.' });
+    res.status(500).json({ error: `Vercel API Crashed: ${error.message}` });
   }
 }
